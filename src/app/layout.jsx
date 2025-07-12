@@ -2,7 +2,7 @@ import { Inter, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./Providers";
 import Navbar from "@/components/Navbar";
-// import Footer from "@/components/Footer";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 const spaceMono = Space_Mono({ 
@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
           <div className="pt-24">
             {children}
           </div>
-          {/* <Footer/> */}
+          <Footer/>
         </Providers>
       </body>
     </html>
