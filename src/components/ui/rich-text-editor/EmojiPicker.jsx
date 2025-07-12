@@ -4,7 +4,7 @@ import { useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 
-// Common emojis - you can add more
+// Common emojis array
 const EMOJIS = [
   "😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", 
   "😉", "😊", "😇", "🥰", "😍", "😘", "😗", "😚", "😙", "😋", 
