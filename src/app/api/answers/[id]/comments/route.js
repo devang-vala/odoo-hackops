@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
+import { dbConnect } from '@/lib/db';
 import Comment from '@/models/Comment';
 import User from '@/models/User';
+import Answer from '@/models/Answer';
+import Question from '@/models/Question';
+import { notifyAnswerCommented, notifyMention, extractMentions } from '@/lib/notifications';
 
 export async function GET(request, { params }) {
   try {
@@ -75,6 +78,42 @@ export async function POST(request, { params }) {
     await comment.populate('author', 'username');
     if (parentCommentId) {
       await comment.populate('parentComment');
+    }
+
+    // Create notifications
+    try {
+      const answer = await Answer.findById(answerId).populate('author', 'username');
+      const question = await Question.findById(answer.question).populate('author', 'username');
+      
+      // Notify answer author (if different from comment author)
+      if (answer && answer.author._id.toString() !== authorId) {
+        await notifyAnswerCommented(
+          answer.author._id,
+          comment.author.username,
+          question.title,
+          answer.question
+        );
+      }
+
+      // Check for mentions and notify mentioned users
+      const mentions = extractMentions(content);
+      for (const username of mentions) {
+        try {
+          const mentionedUser = await User.findOne({ username });
+          if (mentionedUser && mentionedUser._id.toString() !== authorId) {
+            await notifyMention(
+              mentionedUser._id,
+              comment.author.username,
+              content,
+              answer.question
+            );
+          }
+        } catch (error) {
+          console.error('Error processing mention:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating notifications:', error);
     }
 
     return NextResponse.json({ comment }, { status: 201 });

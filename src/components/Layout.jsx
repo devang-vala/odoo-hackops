@@ -1,11 +1,91 @@
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { Bell, User, Search, LogOut, Settings } from 'lucide-react';
+import NotificationDropdown from '@/components/ui/NotificationDropdown';
+import { useRealTimeNotifications } from '@/lib/hooks/useRealTimeNotifications';
 
 export default function Layout({ children }) {
   const { data: session, status } = useSession();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notificationButtonRef = useRef(null);
+
+  // Memoized callback for new notifications
+  const handleNewNotification = useCallback((newNotification) => {
+    // Add new notification to the count
+    setUnreadCount(prev => prev + 1);
+    
+    // Show a toast notification (optional)
+    showToastNotification(newNotification);
+  }, []);
+
+  // Use the custom hook for real-time notifications
+  useRealTimeNotifications(session?.user?.id, handleNewNotification);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchUnreadCount();
+    }
+  }, [session?.user?.id]);
+
+  // Handle click outside to close notification dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationButtonRef.current && !notificationButtonRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  const showToastNotification = (notification) => {
+    // You can implement a toast notification here
+    // For now, we'll just log it
+    console.log('New notification:', notification);
+  };
+
+  // Listen for notification events from dropdown
+  useEffect(() => {
+    const handleNotificationRead = () => {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    };
+
+    const handleAllNotificationsRead = () => {
+      setUnreadCount(0);
+    };
+
+    window.addEventListener('notification-read', handleNotificationRead);
+    window.addEventListener('all-notifications-read', handleAllNotificationsRead);
+
+    return () => {
+      window.removeEventListener('notification-read', handleNotificationRead);
+      window.removeEventListener('all-notifications-read', handleAllNotificationsRead);
+    };
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await fetch(`/api/notifications?userId=${session.user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        const unread = data.notifications.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -50,10 +130,28 @@ export default function Layout({ children }) {
                   </Link>
 
                   {/* Notifications */}
-                  <button className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                  </button>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                      ref={notificationButtonRef}
+                    >
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <span className="text-xs text-white font-medium">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+                    
+                    <NotificationDropdown 
+                      isOpen={showNotifications}
+                      onClose={() => setShowNotifications(false)}
+                      userId={session.user.id}
+                    />
+                  </div>
 
                   {/* User Menu */}
                   <div className="relative group">
