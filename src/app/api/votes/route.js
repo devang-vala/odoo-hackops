@@ -3,50 +3,60 @@ import { dbConnect } from '@/lib/db';
 import Vote from '@/models/Vote';
 import Question from '@/models/Question';
 import Answer from '@/models/Answer';
+import mongoose from 'mongoose';
 
 export async function POST(request) {
   try {
     await dbConnect();
     const { type, itemId, userId, value } = await request.json();
+
+    // Convert to ObjectId
+    const itemObjectId = new mongoose.Types.ObjectId(itemId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
     if (!type || !itemId || !userId || typeof value !== 'number') {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+    if (!['question', 'answer'].includes(type)) {
+      return NextResponse.json({ error: 'Invalid vote type' }, { status: 400 });
+    }
+    if (![1, -1].includes(value)) {
+      return NextResponse.json({ error: 'Invalid vote value' }, { status: 400 });
+    }
+
     // Check if user has already voted
     const existingVote = await Vote.findOne({
-      user: userId,
-      [type]: itemId
+      user: userObjectId,
+      [type]: itemObjectId
     });
     let userVote = 0;
     if (existingVote) {
       if (existingVote.value === value) {
-        // Remove vote
         await Vote.deleteOne({ _id: existingVote._id });
         userVote = 0;
       } else {
-        // Change vote
         existingVote.value = value;
         await existingVote.save();
         userVote = value;
       }
     } else {
-      // New vote
-      const voteData = { user: userId, value };
-      if (type === 'question') voteData.question = itemId;
-      else if (type === 'answer') voteData.answer = itemId;
+      const voteData = { user: userObjectId, value };
+      if (type === 'question') voteData.question = itemObjectId;
+      else if (type === 'answer') voteData.answer = itemObjectId;
       await new Vote(voteData).save();
       userVote = value;
     }
     // Update vote count on the item
     const voteCount = await Vote.aggregate([
-      { $match: { [type]: itemId } },
+      { $match: { [type]: itemObjectId } },
       { $group: { _id: null, total: { $sum: '$value' } } }
     ]);
     const totalVotes = voteCount.length > 0 ? voteCount[0].total : 0;
     // Update the item's vote count
     if (type === 'question') {
-      await Question.findByIdAndUpdate(itemId, { votes: totalVotes });
+      await Question.findByIdAndUpdate(itemObjectId, { votes: totalVotes });
     } else if (type === 'answer') {
-      await Answer.findByIdAndUpdate(itemId, { votes: totalVotes });
+      await Answer.findByIdAndUpdate(itemObjectId, { votes: totalVotes });
     }
     return NextResponse.json({ success: true, totalVotes, userVote });
   } catch (error) {
@@ -65,11 +75,13 @@ export async function GET(request) {
     if (!type || !itemId || !userId) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
+    const itemObjectId = new mongoose.Types.ObjectId(itemId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     // Get user's vote on this item
-    const vote = await Vote.findOne({ user: userId, [type]: itemId });
+    const vote = await Vote.findOne({ user: userObjectId, [type]: itemObjectId });
     // Get total vote count
     const voteCount = await Vote.aggregate([
-      { $match: { [type]: itemId } },
+      { $match: { [type]: itemObjectId } },
       { $group: { _id: null, total: { $sum: '$value' } } }
     ]);
     const totalVotes = voteCount.length > 0 ? voteCount[0].total : 0;

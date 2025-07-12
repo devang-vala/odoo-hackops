@@ -313,6 +313,8 @@ export default function QuestionDetailPage() {
 
   // Voting handler
   const handleVote = async (type, itemId, value) => {
+    console.log('Vote handler called:', { type, itemId, value, userId: session?.user?.id });
+    
     if (!session?.user?.id) {
       router.push("/auth/signin")
       return
@@ -320,12 +322,14 @@ export default function QuestionDetailPage() {
 
     setVoteLoading((v) => ({ ...v, [itemId]: true }))
     try {
+      console.log('Sending vote request to API...');
       const res = await fetch("/api/votes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, itemId, userId: session.user.id, value }),
       })
       const data = await res.json()
+      console.log('Vote API response:', data);
 
       if (!res.ok) throw new Error(data.error || "Vote failed")
 
@@ -339,6 +343,7 @@ export default function QuestionDetailPage() {
 
       toast.success("Vote recorded!")
     } catch (e) {
+      console.error('Vote error:', e);
       toast.error(e.message)
     } finally {
       setVoteLoading((v) => ({ ...v, [itemId]: false }))
@@ -511,7 +516,10 @@ export default function QuestionDetailPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleVote("question", question._id, 1)}
+                onClick={() => {
+                  console.log('Question upvote clicked');
+                  handleVote("question", question._id, 1);
+                }}
                 className={questionUserVote === 1 ? "bg-purple-100 text-purple-700" : ""}
                 disabled={!!voteLoading[question._id]}
               >
@@ -523,7 +531,10 @@ export default function QuestionDetailPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleVote("question", question._id, -1)}
+                onClick={() => {
+                  console.log('Question downvote clicked');
+                  handleVote("question", question._id, -1);
+                }}
                 className={questionUserVote === -1 ? "bg-purple-100 text-purple-700" : ""}
                 disabled={!!voteLoading[question._id]}
               >
@@ -688,7 +699,10 @@ export default function QuestionDetailPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleVote("answer", answer._id, 1)}
+                          onClick={() => {
+                            console.log('Answer upvote clicked:', answer._id);
+                            handleVote("answer", answer._id, 1);
+                          }}
                           className={answerUserVotes[answer._id] === 1 ? "bg-purple-100 text-purple-700" : ""}
                           disabled={!!voteLoading[answer._id]}
                         >
@@ -700,7 +714,10 @@ export default function QuestionDetailPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleVote("answer", answer._id, -1)}
+                          onClick={() => {
+                            console.log('Answer downvote clicked:', answer._id);
+                            handleVote("answer", answer._id, -1);
+                          }}
                           className={answerUserVotes[answer._id] === -1 ? "bg-purple-100 text-purple-700" : ""}
                           disabled={!!voteLoading[answer._id]}
                         >

@@ -80,7 +80,7 @@ export async function POST(request, context) {
     });
 
     // Populate author information for response
-    await reply.populate('author', 'username');
+    await reply.populate('author', 'username name');
 
     // Create notifications
     try {
@@ -91,7 +91,7 @@ export async function POST(request, context) {
       if (answer && answer.author._id.toString() !== authorId) {
         await notifyAnswerReplied(
           answer.author._id,
-          reply.author.username,
+          reply.author.username || reply.author.name || 'User',
           question.title,
           question._id
         );
@@ -105,7 +105,7 @@ export async function POST(request, context) {
           if (mentionedUser && mentionedUser._id.toString() !== authorId) {
             await notifyMention(
               mentionedUser._id,
-              reply.author.username,
+              reply.author.username || reply.author.name || 'User',
               content,
               question._id
             );

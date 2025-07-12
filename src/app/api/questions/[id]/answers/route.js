@@ -152,7 +152,7 @@ export async function POST(request, context) {
     });
 
     // Populate author information for response
-    await answer.populate('author', 'username');
+    await answer.populate('author', 'username name');
 
     // Create notification for question author
     try {
@@ -160,7 +160,7 @@ export async function POST(request, context) {
       if (question && question.author._id.toString() !== authorId) {
         await notifyQuestionAnswered(
           question.author._id,
-          answer.author.username,
+          answer.author.username || answer.author.name || 'User',
           question.title,
           questionId
         );

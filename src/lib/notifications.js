@@ -32,6 +32,19 @@ export const createNotification = async (notificationData) => {
   }
 };
 
+// Extract mentions from content (@username)
+export const extractMentions = (content) => {
+  const mentionRegex = /@(\w+)/g;
+  const mentions = [];
+  let match;
+  
+  while ((match = mentionRegex.exec(content)) !== null) {
+    mentions.push(match[1]);
+  }
+  
+  return mentions;
+};
+
 // Real-time notification functions using Pusher
 export const subscribeToNotifications = (userId, onNewNotification) => {
   if (typeof window === 'undefined') return null;
@@ -60,15 +73,20 @@ export const subscribeToNotifications = (userId, onNewNotification) => {
   });
 };
 
+// Unsubscribe from notifications
 export const unsubscribeFromNotifications = (userId) => {
   if (typeof window === 'undefined') return;
 
   import('./pusher').then(({ pusherClient, CHANNELS }) => {
-    if (pusherClient) {
+    if (!pusherClient) return;
+    
+    try {
       pusherClient.unsubscribe(CHANNELS.USER_NOTIFICATIONS(userId));
+    } catch (error) {
+      console.error('Error unsubscribing from notifications:', error);
     }
   }).catch(error => {
-    console.error('Error unloading Pusher:', error);
+    console.error('Error loading Pusher for unsubscribe:', error);
   });
 };
 
@@ -142,17 +160,4 @@ export const notifyMention = async (mentionedUserId, mentionerName, content, que
     message: `${mentionerName} mentioned you in a comment`,
     link: `/questions/${questionId}`
   });
-};
-
-// Extract mentions from text content
-export const extractMentions = (content) => {
-  const mentionRegex = /@(\w+)/g;
-  const mentions = [];
-  let match;
-
-  while ((match = mentionRegex.exec(content)) !== null) {
-    mentions.push(match[1]);
-  }
-
-  return mentions;
 };
