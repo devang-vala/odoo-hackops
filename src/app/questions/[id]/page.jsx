@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import ContentFilter from "@/components/ui/ContentFilter"
 import ThreadedComment from "@/components/ui/ThreadedComment"
+import Reply from "@/components/ui/Reply"
 import {
   ArrowUp,
   ArrowDown,
@@ -58,6 +59,11 @@ export default function QuestionDetailPage() {
   const [questionUserVote, setQuestionUserVote] = useState(0)
   const [answerUserVotes, setAnswerUserVotes] = useState({})
   const [voteLoading, setVoteLoading] = useState({})
+
+  // Reply states
+  const [showReplyForm, setShowReplyForm] = useState({})
+  const [replyContent, setReplyContent] = useState({})
+  const [submittingReply, setSubmittingReply] = useState({})
 
   // Fetch question data
   useEffect(() => {
@@ -365,6 +371,43 @@ export default function QuestionDetailPage() {
     } catch (error) {
       console.error("Error accepting answer:", error)
       toast.error("Error accepting answer")
+    }
+  }
+
+  // Handle reply submission
+  const handleReplySubmit = async (answerId) => {
+    if (!session?.user?.id) {
+      router.push("/auth/signin")
+      return
+    }
+
+    const content = replyContent[answerId]
+    if (!content?.trim()) return
+
+    setSubmittingReply((prev) => ({ ...prev, [answerId]: true }))
+    try {
+      const response = await fetch(`/api/answers/${answerId}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          authorId: session.user.id,
+        }),
+      })
+
+      if (response.ok) {
+        setReplyContent((prev) => ({ ...prev, [answerId]: "" }))
+        setShowReplyForm((prev) => ({ ...prev, [answerId]: false }))
+        fetchAnswers() // Refresh to get updated replies
+        toast.success("Reply posted successfully!")
+      } else {
+        toast.error("Failed to post reply")
+      }
+    } catch (error) {
+      console.error("Error submitting reply:", error)
+      toast.error("Error submitting reply")
+    } finally {
+      setSubmittingReply((prev) => ({ ...prev, [answerId]: false }))
     }
   }
 
@@ -711,6 +754,63 @@ export default function QuestionDetailPage() {
                             </Badge>
                           )}
                         </div>
+
+                        {/* Answer Actions */}
+                        <div className="mt-6 flex gap-4 text-sm">
+                          {session && session.user.id !== answer.author._id && (
+                            <button
+                              onClick={() => setShowReplyForm(prev => ({ ...prev, [answer._id]: !prev[answer._id] }))}
+                              className="text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50"
+                            >
+                              {showReplyForm[answer._id] ? 'Cancel Reply' : 'Reply to Answer'}
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Reply Form */}
+                        {showReplyForm[answer._id] && (
+                          <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                            <h4 className="text-md font-medium mb-3">Your Reply</h4>
+                            <Textarea
+                              value={replyContent[answer._id] || ''}
+                              onChange={(e) => setReplyContent(prev => ({ ...prev, [answer._id]: e.target.value }))}
+                              placeholder="Write your reply here..."
+                              className="min-h-[100px] mb-3"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => handleReplySubmit(answer._id)}
+                                disabled={!replyContent[answer._id]?.trim() || submittingReply[answer._id]}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                {submittingReply[answer._id] ? (
+                                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                ) : (
+                                  <Send className="w-4 h-4 mr-2" />
+                                )}
+                                Post Reply
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowReplyForm(prev => ({ ...prev, [answer._id]: false }))}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Replies Section */}
+                        {answer.replies && answer.replies.length > 0 && (
+                          <div className="mt-6 border-t pt-4">
+                            <h4 className="text-sm font-medium text-gray-900 mb-4">Replies ({answer.replies.length})</h4>
+                            <div className="space-y-3">
+                              {answer.replies.map((reply) => (
+                                <Reply key={reply._id} reply={reply} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Answer Comments */}
                         <div className="mt-6 border-t pt-4">

@@ -6,6 +6,7 @@ const answerSchema = new mongoose.Schema({
   question: { type: mongoose.Schema.Types.ObjectId, ref: "Question", required: true },
   votes:    { type: Number, default: 0 },
   isAccepted: { type: Boolean, default: false },
+  replies:  [{ type: mongoose.Schema.Types.ObjectId, ref: "Reply" }],
 }, { timestamps: true });
 
 export default mongoose.models.Answer || mongoose.model("Answer", answerSchema);

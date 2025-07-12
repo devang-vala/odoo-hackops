@@ -120,6 +120,18 @@ export const notifyAnswerAccepted = async (answerAuthorId, questionAuthorName, q
   });
 };
 
+// Create notification when someone replies to an answer
+export const notifyAnswerReplied = async (answerAuthorId, replyAuthorName, questionTitle, questionId) => {
+  if (answerAuthorId === replyAuthorName) return; // Don't notify self
+
+  await createNotification({
+    user: answerAuthorId,
+    type: 'reply',
+    message: `${replyAuthorName} replied to your answer on: "${questionTitle}"`,
+    link: `/questions/${questionId}`
+  });
+};
+
 // Create notification for mentions (@username)
 export const notifyMention = async (mentionedUserId, mentionerName, content, questionId) => {
   if (mentionedUserId === mentionerName) return; // Don't notify self
