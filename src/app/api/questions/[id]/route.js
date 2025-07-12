@@ -5,7 +5,7 @@ import User from '@/models/User';
 
 export async function GET(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     if (!id) {
       return NextResponse.json({ error: 'Question ID is required' }, { status: 400 });
