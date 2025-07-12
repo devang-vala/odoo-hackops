@@ -2,7 +2,20 @@
 
 export const createNotification = async (notificationData) => {
   try {
-    const response = await fetch('/api/notifications', {
+    // Check if we're running on server side
+    const isServer = typeof window === 'undefined';
+    
+    let url;
+    if (isServer) {
+      // Server-side: use absolute URL with process.env.NEXT_PUBLIC_APP_URL or a default
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      url = `${baseUrl}/api/notification`;
+    } else {
+      // Client-side: can use relative URL
+      url = '/api/notification';
+    }
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(notificationData)
@@ -95,6 +108,18 @@ export const notifyQuestionCommented = async (questionAuthorId, commentAuthorNam
   });
 };
 
+// Create notification when answer is accepted
+export const notifyAnswerAccepted = async (answerAuthorId, questionAuthorName, questionTitle, questionId) => {
+  if (answerAuthorId === questionAuthorName) return; // Don't notify self
+
+  await createNotification({
+    user: answerAuthorId,
+    type: 'answer',
+    message: `${questionAuthorName} accepted your answer to: "${questionTitle}"`,
+    link: `/questions/${questionId}`
+  });
+};
+
 // Create notification for mentions (@username)
 export const notifyMention = async (mentionedUserId, mentionerName, content, questionId) => {
   if (mentionedUserId === mentionerName) return; // Don't notify self
@@ -118,4 +143,4 @@ export const extractMentions = (content) => {
   }
 
   return mentions;
-}; 
+};

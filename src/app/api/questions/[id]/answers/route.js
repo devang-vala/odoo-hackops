@@ -4,12 +4,14 @@ import Answer from '@/models/Answer';
 import User from '@/models/User';
 import Vote from '@/models/Vote';
 import Question from '@/models/Question';
+import Comment from '@/models/Comment';
 import { notifyQuestionAnswered } from '@/lib/notifications';
 import { checkProfanity } from '../../../questions/route';
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
     await dbConnect();
+    const { params } = await context;
     
     const { searchParams } = new URL(request.url);
     const questionId = params.id;
@@ -43,7 +45,7 @@ export async function GET(request, { params }) {
 
     // Get answers with author information
     const answers = await Answer.find(query)
-      .populate('author', 'username')
+      .populate('author', 'username name')
       .sort(sortOptions)
       .lean();
 
@@ -71,19 +73,50 @@ export async function GET(request, { params }) {
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
 
-      return NextResponse.json({ answers: answersWithVotes });
+      // Populate comments for each answer
+      const answersWithComments = await Promise.all(
+        answersWithVotes.map(async (answer) => {
+          const comments = await Comment.find({ answer: answer._id })
+            .populate('author', 'username name')
+            .sort({ createdAt: -1 })
+            .lean();
+
+          return {
+            ...answer,
+            comments: comments
+          };
+        })
+      );
+
+      return NextResponse.json({ answers: answersWithComments });
     }
 
-    return NextResponse.json({ answers });
+    // Populate comments for each answer
+    const answersWithComments = await Promise.all(
+      answers.map(async (answer) => {
+        const comments = await Comment.find({ answer: answer._id })
+          .populate('author', 'username name')
+          .sort({ createdAt: -1 })
+          .lean();
+
+        return {
+          ...answer,
+          comments: comments
+        };
+      })
+    );
+
+    return NextResponse.json({ answers: answersWithComments });
   } catch (error) {
     console.error('Error fetching answers:', error);
     return NextResponse.json({ error: 'Failed to fetch answers' }, { status: 500 });
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
     await dbConnect();
+    const { params } = await context;
     
     const questionId = params.id;
     const { content, authorId } = await request.json();
@@ -106,6 +139,11 @@ export async function POST(request, { params }) {
     });
 
     await answer.save();
+
+    // Add answer to question's answers array
+    await Question.findByIdAndUpdate(questionId, {
+      $push: { answers: answer._id }
+    });
 
     // Populate author information for response
     await answer.populate('author', 'username');
@@ -130,4 +168,4 @@ export async function POST(request, { params }) {
     console.error('Error creating answer:', error);
     return NextResponse.json({ error: 'Failed to create answer' }, { status: 500 });
   }
-} 
+}
