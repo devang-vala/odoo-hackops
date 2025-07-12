@@ -2,45 +2,36 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Search, TrendingUp, Users, MessageSquare, Award } from 'lucide-react';
 
 export default function Home() {
   const { data: session } = useSession();
 
-  // Sample questions data
-  const questions = [
-    {
-      id: 1,
-      title: "How to join 2 columns in a data set to make a separate column in SQL",
-      description: "I do not know the code for it as I am a beginner. As an example what I need to do is like there is a column 1 containing First name and column 2 consists of last name I want a column to combine...",
-      tags: ["SQL", "Database"],
-      user: "John Developer",
-      answers: 5,
-      votes: 12,
-      time: "2 hours ago"
-    },
-    {
-      id: 2,
-      title: "Best practices for React state management in large applications",
-      description: "I'm working on a large React application and struggling with state management. What are the best practices and patterns for managing state effectively?",
-      tags: ["React", "JavaScript", "State Management"],
-      user: "Sarah Chen",
-      answers: 3,
-      votes: 8,
-      time: "4 hours ago"
-    },
-    {
-      id: 3,
-      title: "How to implement authentication with NextJS and MongoDB",
-      description: "I need to implement a secure authentication system using NextJS and MongoDB. What's the recommended approach?",
-      tags: ["NextJS", "MongoDB", "Authentication"],
-      user: "Mike Johnson",
-      answers: 2,
-      votes: 15,
-      time: "6 hours ago"
-    }
-  ];
+  
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch('/api/questions');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setQuestions(data);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   const filters = ["Newest", "Unanswered", "Popular", "Hot"];
 
@@ -120,38 +111,46 @@ export default function Home() {
 
             {/* Questions */}
             <div className="space-y-6">
-              {questions.map((question) => (
-                <div key={question.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                      {question.title}
-                    </h2>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500 ml-4">
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded">{question.answers} ans</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-600 mb-4 line-clamp-2">
-                    {question.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {question.tags.map((tag) => (
-                        <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded">
-                          {tag}
-                        </span>
-                      ))}
+              {loading ? (
+                <p>Loading questions...</p>
+              ) : error ? (
+                <p className="text-red-500">Error: {error}</p>
+              ) : questions.length === 0 ? (
+                <p>No questions found.</p>
+              ) : (
+                questions.map((question) => (
+                  <div key={question.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-4">
+                      <h2 className="text-xl font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
+                        {question.title}
+                      </h2>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500 ml-4">
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded">{question.answers} ans</span>
+                      </div>
                     </div>
                     
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span>{question.votes} votes</span>
-                      <span>by {question.user}</span>
-                      <span>{question.time}</span>
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {question.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-2">
+                        {question.tags.map((tag) => (
+                          <span key={tag} className="px-2 py-1 bg-gray-100 text-gray-700 text-sm rounded">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>{question.votes} votes</span>
+                        <span>by {question.user}</span>
+                        <span>{question.time}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Pagination */}
