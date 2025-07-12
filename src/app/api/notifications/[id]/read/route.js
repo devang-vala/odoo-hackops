@@ -1,41 +1,26 @@
-import { NextResponse } from 'next/server';
-import { dbConnect } from '@/lib/db';
-import Notification from '@/models/Notification';
-import { pusher, CHANNELS, EVENTS } from '@/lib/pusher';
+import { NextResponse } from "next/server"
+import { dbConnect } from "@/lib/db"
+import Notification from "@/models/Notification"
 
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
   try {
-    await dbConnect();
-    
-    const notificationId = params.id;
+    await dbConnect()
 
-    const notification = await Notification.findByIdAndUpdate(
-      notificationId,
-      { isRead: true },
-      { new: true }
-    );
+    const { params } = await context
+    const { id } = await params
+
+    const notification = await Notification.findByIdAndUpdate(id, { isRead: true }, { new: true })
 
     if (!notification) {
-      return NextResponse.json({ error: 'Notification not found' }, { status: 404 });
+      return NextResponse.json({ error: "Notification not found" }, { status: 404 })
     }
 
-    // Trigger real-time update via Pusher
-    try {
-      await pusher.trigger(
-        CHANNELS.USER_NOTIFICATIONS(notification.user),
-        EVENTS.NOTIFICATION_READ,
-        {
-          notificationId: notification._id,
-          userId: notification.user
-        }
-      );
-    } catch (error) {
-      console.error('Error triggering Pusher event:', error);
-    }
-
-    return NextResponse.json({ notification });
+    return NextResponse.json({
+      success: true,
+      notification,
+    })
   } catch (error) {
-    console.error('Error marking notification as read:', error);
-    return NextResponse.json({ error: 'Failed to mark notification as read' }, { status: 500 });
+    console.error("Error marking notification as read:", error)
+    return NextResponse.json({ error: "Failed to update notification" }, { status: 500 })
   }
-} 
+}

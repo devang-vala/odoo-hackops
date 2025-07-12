@@ -5,9 +5,10 @@ import User from '@/models/User';
 import Question from '@/models/Question';
 import { notifyQuestionCommented, notifyMention, extractMentions } from '@/lib/notifications';
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
     await dbConnect();
+    const { params } = await context;
     
     const { searchParams } = new URL(request.url);
     const questionId = params.id;
@@ -36,29 +37,26 @@ export async function GET(request, { params }) {
         sortOptions = { createdAt: -1 };
     }
 
-    // Get comments with author information and populate replies
+    // Get comments with author information
     const comments = await Comment.find(query)
-      .populate('author', 'username')
-      .populate('parentComment')
+      .populate('author', 'username name')
       .sort(sortOptions)
       .lean();
 
-    // Organize comments into a threaded structure
-    const threadedComments = organizeThreadedComments(comments);
-
-    return NextResponse.json({ comments: threadedComments });
+    return NextResponse.json({ comments });
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
     await dbConnect();
+    const { params } = await context;
     
     const questionId = params.id;
-    const { content, authorId, parentCommentId } = await request.json();
+    const { content, authorId } = await request.json();
 
     if (!content || !authorId) {
       return NextResponse.json({ error: 'Content and author ID are required' }, { status: 400 });
@@ -67,8 +65,7 @@ export async function POST(request, { params }) {
     const comment = new Comment({
       content,
       author: authorId,
-      question: questionId,
-      parentComment: parentCommentId || null
+      question: questionId
     });
 
     await comment.save();
@@ -117,32 +114,3 @@ export async function POST(request, { params }) {
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
   }
 }
-
-// Helper function to organize comments into a threaded structure
-function organizeThreadedComments(comments) {
-  const commentMap = new Map();
-  const rootComments = [];
-
-  // First pass: create a map of all comments
-  comments.forEach(comment => {
-    commentMap.set(comment._id.toString(), { ...comment, replies: [] });
-  });
-
-  // Second pass: organize into threaded structure
-  comments.forEach(comment => {
-    const commentObj = commentMap.get(comment._id.toString());
-    
-    if (comment.parentComment) {
-      // This is a reply to another comment
-      const parentComment = commentMap.get(comment.parentComment.toString());
-      if (parentComment) {
-        parentComment.replies.push(commentObj);
-      }
-    } else {
-      // This is a root comment
-      rootComments.push(commentObj);
-    }
-  });
-
-  return rootComments;
-} 
