@@ -12,7 +12,7 @@ export async function DELETE(req, { params }) {
     // TODO: Add actual admin role check here. Example: if (!session.user.isAdmin) { ... }
 
     await dbConnect();
-    const { id } = params;
+    const { id } = await params;
 
     const deletedQuestion = await Question.findByIdAndDelete(id);
 
@@ -36,7 +36,7 @@ export async function PATCH(req, { params }) {
     // TODO: Add actual admin role check here. Example: if (!session.user.isAdmin) { ... }
 
     await dbConnect();
-    const { id } = params;
+    const { id } = await params;
     const { action } = await req.json(); // Expecting { action: 'approve' }
 
     if (action === 'approve') {
