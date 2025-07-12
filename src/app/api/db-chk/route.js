@@ -1,6 +1,5 @@
-// app/api/health/route.ts
 import { NextResponse } from "next/server";
-import { dbConnect } from "@/lib/db"; // adjust the path as needed
+import { dbConnect } from "@/lib/db";
 
 export async function GET() {
     try {
