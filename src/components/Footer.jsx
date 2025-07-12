@@ -48,53 +48,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Community Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Community</h3>
-            <ul className="space-y-2">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Questions
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Tags
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Users
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Unanswered
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Ask Question
-                </a>
-              </li>
-            </ul>
-          </div>
-
           {/* Support Links */}
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">Support</h3>
@@ -129,53 +82,6 @@ export default function Footer() {
                   className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
                 >
                   Bug Reports
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal Links */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">Legal</h3>
-            <ul className="space-y-2">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Terms of Service
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Code of Conduct
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  Cookie Policy
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-600 hover:text-green-500 transition-colors duration-200 text-sm"
-                >
-                  GDPR
                 </a>
               </li>
             </ul>
