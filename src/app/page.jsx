@@ -5,10 +5,12 @@ import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Search, TrendingUp, Users, MessageSquare, Award } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 
 export default function Home() {
   const { data: session } = useSession();
-
+  const searchParams = useSearchParams();
+  const searchTerm = searchParams.get('search');
   
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,8 +18,11 @@ export default function Home() {
 
   useEffect(() => {
     const fetchQuestions = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await fetch('/api/questions');
+        const url = searchTerm ? `/api/questions?search=${searchTerm}` : '/api/questions';
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -31,7 +36,7 @@ export default function Home() {
     };
 
     fetchQuestions();
-  }, []);
+  }, [searchTerm]);
 
   const filters = ["Newest", "Unanswered", "Popular", "Hot"];
 

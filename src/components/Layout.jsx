@@ -1,11 +1,30 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { Bell, User, Search, LogOut, Settings } from 'lucide-react';
+import { debounce } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 export default function Layout({ children }) {
   const { data: session, status } = useSession();
+  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+
+  const debouncedSearch = debounce((value) => {
+    if (value) {
+      router.push(`/?search=${value}`);
+    } else {
+      router.push('/');
+    }
+  }, 500); // 500ms debounce delay
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -31,6 +50,8 @@ export default function Layout({ children }) {
                   type="text"
                   placeholder="Search questions..."
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
                 />
               </div>
             </div>
