@@ -8,6 +8,7 @@ const answerSchema = new mongoose.Schema({
   isAccepted: { type: Boolean, default: false },
   hasProfanity: { type: Boolean, default: false },
   isApproved: { type: Boolean, default: true },
+  replies:  [{ type: mongoose.Schema.Types.ObjectId, ref: "Reply" }],
 }, { timestamps: true });
 
 // Middleware to update user's answersGiven count when a new answer is created

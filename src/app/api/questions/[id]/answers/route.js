@@ -5,8 +5,8 @@ import User from '@/models/User';
 import Vote from '@/models/Vote';
 import Question from '@/models/Question';
 import Comment from '@/models/Comment';
+import Reply from '@/models/Reply';
 import { notifyQuestionAnswered } from '@/lib/notifications';
-import { checkProfanity } from '../../../questions/route';
 
 export async function GET(request, context) {
   try {
@@ -73,40 +73,52 @@ export async function GET(request, context) {
         return new Date(b.createdAt) - new Date(a.createdAt);
       });
 
-      // Populate comments for each answer
-      const answersWithComments = await Promise.all(
+      // Populate comments and replies for each answer
+      const answersWithCommentsAndReplies = await Promise.all(
         answersWithVotes.map(async (answer) => {
           const comments = await Comment.find({ answer: answer._id })
             .populate('author', 'username name')
             .sort({ createdAt: -1 })
             .lean();
 
+          const replies = await Reply.find({ answer: answer._id })
+            .populate('author', 'username name')
+            .sort({ createdAt: -1 })
+            .lean();
+
           return {
             ...answer,
-            comments: comments
+            comments: comments,
+            replies: replies
           };
         })
       );
 
-      return NextResponse.json({ answers: answersWithComments });
+      return NextResponse.json({ answers: answersWithCommentsAndReplies });
     }
 
-    // Populate comments for each answer
-    const answersWithComments = await Promise.all(
+    // Populate comments and replies for each answer
+    const answersWithCommentsAndReplies = await Promise.all(
       answers.map(async (answer) => {
         const comments = await Comment.find({ answer: answer._id })
           .populate('author', 'username name')
           .sort({ createdAt: -1 })
           .lean();
 
+        const replies = await Reply.find({ answer: answer._id })
+          .populate('author', 'username name')
+          .sort({ createdAt: -1 })
+          .lean();
+
         return {
           ...answer,
-          comments: comments
+          comments: comments,
+          replies: replies
         };
       })
     );
 
-    return NextResponse.json({ answers: answersWithComments });
+    return NextResponse.json({ answers: answersWithCommentsAndReplies });
   } catch (error) {
     console.error('Error fetching answers:', error);
     return NextResponse.json({ error: 'Failed to fetch answers' }, { status: 500 });
@@ -125,17 +137,11 @@ export async function POST(request, context) {
       return NextResponse.json({ error: 'Content and author ID are required' }, { status: 400 });
     }
 
-    // Perform profanity check
-    const { hasProfanity } = await checkProfanity(content);
-    const isApproved = !hasProfanity;
-
     const answer = new Answer({
       content,
       author: authorId,
       question: questionId,
-      votes: 0,
-      hasProfanity,
-      isApproved,
+      votes: 0
     });
 
     await answer.save();
