@@ -121,6 +121,14 @@
   }
 }
 
+/* Grid pattern background */
+.bg-grid-pattern {
+    background-color: white;
+  background-image: linear-gradient(#e5e7eb 1px, transparent 1px),
+    linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
 /* For images in question content */
 .prose img {
   max-width: 100%;
