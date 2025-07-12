@@ -70,12 +70,12 @@ export function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-500 underline',
+          class: 'text-[#00d447] underline',
         },
       }),
       Image.configure({
         HTMLAttributes: {
-          class: 'rounded-md max-w-full h-auto editor-image',
+          class: 'max-w-full h-auto editor-image border-2 border-gray-200',
         },
       }),
       TextAlign.configure({
@@ -249,8 +249,8 @@ export function RichTextEditor({
 
   return (
     <div className={cn(
-      "flex flex-col border rounded-md overflow-hidden",
-      isFocused && "ring-2 ring-primary/50",
+      "flex flex-col border-2 border-gray-200 overflow-hidden",
+      isFocused && "border-[#00d447]",
       className
     )}>
       <Toolbar editor={editor} setShowEmojiPicker={setShowEmojiPicker} imageInputRef={imageInputRef} />
@@ -267,8 +267,8 @@ export function RichTextEditor({
         />
         {isDeleting && (
           <div className="absolute inset-0 bg-black/10 flex items-center justify-center z-50">
-            <div className="bg-white p-3 rounded-md shadow-md flex items-center">
-              <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+            <div className="bg-white border-2 border-gray-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] p-3 flex items-center">
+              <Loader2 className="h-5 w-5 animate-spin text-[#00d447] mr-2" />
               <span>Removing Image...</span>
             </div>
           </div>
@@ -279,7 +279,7 @@ export function RichTextEditor({
       
       {editor && (
         <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-          <div className="flex bg-white shadow rounded-md p-1">
+          <div className="flex bg-white border-2 border-gray-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] p-1">
             <Button 
               size="sm" 
               variant={editor.isActive('bold') ? 'default' : 'ghost'} 
@@ -312,6 +312,20 @@ export function RichTextEditor({
       )}
 
       <style jsx global>{`
+        /* Editor Styling */
+        .ProseMirror:focus {
+          outline: none;
+        }
+        
+        .ProseMirror p.is-editor-empty:first-child::before {
+          color: #adb5bd;
+          content: attr(data-placeholder);
+          float: left;
+          height: 0;
+          pointer-events: none;
+        }
+        
+        /* Image Styling */
         .image-wrapper {
           display: inline-block;
           position: relative;
@@ -331,23 +345,65 @@ export function RichTextEditor({
           color: white;
           width: 24px;
           height: 24px;
-          border-radius: 50%;
+          border: none;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          border: none;
           z-index: 20;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
         .image-delete-btn:hover {
           background-color: #dc2626;
+          transform: translate(-1px, -1px);
+          box-shadow: 1px 1px 0px 0px rgba(0,0,0,0.2);
         }
         
         .image-delete-btn svg {
           width: 16px;
           height: 16px;
+        }
+        
+        /* Add our neo-brutalist styling to the editor content */
+        .ProseMirror h1, .ProseMirror h2, .ProseMirror h3, .ProseMirror h4 {
+          font-weight: bold;
+          margin-bottom: 0.5em;
+          margin-top: 1em;
+        }
+        
+        .ProseMirror h1 {
+          font-size: 1.75em;
+        }
+        
+        .ProseMirror h2 {
+          font-size: 1.5em;
+        }
+        
+        .ProseMirror h3 {
+          font-size: 1.25em;
+        }
+        
+        .ProseMirror ul, .ProseMirror ol {
+          padding-left: 1.5em;
+        }
+        
+        .ProseMirror blockquote {
+          border-left: 2px solid #e5e7eb;
+          padding-left: 1em;
+          font-style: italic;
+        }
+        
+        .ProseMirror pre {
+          background-color: #f3f4f6;
+          border: 2px solid #e5e7eb;
+          padding: 0.75em;
+          font-family: monospace;
+        }
+        
+        .ProseMirror a {
+          color: #00d447;
+          text-decoration: underline;
         }
       `}</style>
     </div>

@@ -7,8 +7,7 @@ import Layout from '@/components/Layout';
 import { RichTextEditor } from '@/components/ui/rich-text-editor/RichTextEditor';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Tag as TagIcon } from 'lucide-react';
 
 export default function AskQuestion() {
   const { data: session, status } = useSession();
@@ -24,7 +23,7 @@ export default function AskQuestion() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <div className="w-8 h-8 border-4 border-[#00d447] border-t-transparent animate-spin"></div>
       </div>
     );
   }
@@ -37,7 +36,7 @@ export default function AskQuestion() {
   // Handle adding tags
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim().toLowerCase();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
+    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 5) {
       setTags([...tags, trimmedTag]);
       setTagInput('');
     }
@@ -115,17 +114,17 @@ export default function AskQuestion() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Ask a Question</h1>
-          <p className="text-gray-600 mt-2">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white border-2 border-gray-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] p-8 mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Ask a Question</h1>
+          <p className="text-gray-600">
             Get help from the community by asking a clear, detailed question
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+            <div className="bg-red-50 border-2 border-red-200 p-4 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <X className="h-5 w-5 text-red-500" />
@@ -138,26 +137,25 @@ export default function AskQuestion() {
           )}
 
           {/* Question Title */}
-          <div className="space-y-2">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white border-2 border-gray-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.05)] p-6 hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] transition-all">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
               Title <span className="text-red-500">*</span>
             </label>
-            <Input
+            <input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's your programming question? Be specific."
-              className="w-full"
-              required
+              className="w-full px-4 py-2 border-2 border-gray-200 focus:border-[#00d447] focus:outline-none"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mt-2">
               Your title should summarize the problem you're facing
             </p>
           </div>
 
           {/* Question Details */}
-          <div className="space-y-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white border-2 border-gray-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.05)] p-6 hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] transition-all">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
               Details <span className="text-red-500">*</span>
             </label>
             <RichTextEditor
@@ -165,81 +163,87 @@ export default function AskQuestion() {
               onChange={setDescription}
               placeholder="Provide all the details someone would need to answer your question..."
               minHeight="300px"
+              className="border-0"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mt-2">
               Include code, error messages, and all relevant information
             </p>
           </div>
 
           {/* Tags */}
-          <div className="space-y-2">
-            <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+          <div className="bg-white border-2 border-gray-200 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.05)] p-6 hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.05)] transition-all">
+            <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
               Tags <span className="text-red-500">*</span>
             </label>
             <div className="flex">
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagKeyDown}
-                placeholder="Add tags (e.g., javascript, react)"
-                className="flex-grow"
-              />
-              <Button 
+              <div className="relative flex-grow">
+                <TagIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="tags"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                  placeholder="Add tags (e.g., javascript, react)"
+                  className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 focus:border-[#00d447] focus:outline-none"
+                />
+              </div>
+              <button 
                 type="button" 
                 onClick={handleAddTag} 
-                variant="outline" 
-                className="ml-2"
+                className="ml-2 px-4 py-2 border-2 border-gray-300 bg-white text-gray-700 font-medium hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all"
               >
                 Add
-              </Button>
+              </button>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 mt-2">
               Add up to 5 tags to describe what your question is about
             </p>
             
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                    {tag}
+                  <div key={tag} className="bg-gray-100 border-2 border-gray-200 px-2 py-1 flex items-center gap-1">
+                    <span className="text-sm">{tag}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 hover:text-red-500"
+                      className="hover:text-red-500"
                     >
                       <X className="h-3 w-3" />
                     </button>
-                  </Badge>
+                  </div>
                 ))}
               </div>
             )}
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end space-x-4 pt-4 border-t">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => router.back()}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || !title.trim() || !description.trim() || tags.length === 0}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                  Submitting...
-                </span>
-              ) : (
-                'Post Your Question'
-              )}
-            </Button>
+          <div className="flex justify-between items-center border-t-2 border-gray-200 pt-6">
+            
+            <div className="flex space-x-4">
+              <button 
+                type="button" 
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+                className="px-4 py-2 border-2 border-gray-300 bg-white text-gray-700 font-medium hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:translate-x-0 disabled:hover:shadow-none"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={isSubmitting || !title.trim() || !description.trim() || tags.length === 0}
+                className="px-4 py-2 border-2 border-[#00d447] bg-[#00d447] text-white font-medium hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:translate-x-0 disabled:hover:shadow-none"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent animate-spin mr-2"></div>
+                    Submitting...
+                  </span>
+                ) : (
+                  'Post Your Question'
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>
