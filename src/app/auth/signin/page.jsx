@@ -8,53 +8,79 @@ import { Eye, EyeOff, ArrowRight, Mail, Lock } from 'lucide-react';
 
 export default function SignIn() {
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    email: '',
+    password: '',
+  });
+  const [globalError, setGlobalError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    // Clear that field’s error on change
+    setFieldErrors(prev => ({ ...prev, [e.target.name]: '' }));
+    setGlobalError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setGlobalError('');
+    setFieldErrors({ email: '', password: '' });
 
+    const { email, password } = formData;
+    let hasError = false;
+
+    // 1) Client‑side validation
+    if (!email.trim()) {
+      setFieldErrors(fe => ({ ...fe, email: 'Email is required' }));
+      hasError = true;
+    }
+    if (!password) {
+      setFieldErrors(fe => ({ ...fe, password: 'Password is required' }));
+      hasError = true;
+    }
+    if (hasError) {
+      setLoading(false);
+      return;
+    }
+
+    // 2) Call NextAuth
     try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
+      const res = await signIn('credentials', {
+        email: email.trim(),
+        password,
         redirect: false,
       });
 
-      if (result?.error) {
-        setError('Invalid email or password');
+      if (res?.error) {
+        // Could parse res.error for specific messages
+        setGlobalError('Invalid email or password');
       } else {
+        // On success, get session and redirect by role
         const session = await getSession();
-        if (session?.user?.role === 'admin') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
+        const dest = session?.user?.role === 'admin'
+          ? '/admin'
+          : '/dashboard';
+        router.push(dest);
       }
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+    } catch (err) {
+      setGlobalError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+
         {/* Header */}
         <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
@@ -73,12 +99,13 @@ export default function SignIn() {
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
+            {globalError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
+                {globalError}
               </div>
             )}
 
+            {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -89,15 +116,22 @@ export default function SignIn() {
                   id="email"
                   name="email"
                   type="email"
-                  required
-                  className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className={`pl-10 w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all ${
+                    fieldErrors.email
+                      ? 'border-red-500 focus:ring-red-300'
+                      : 'border-gray-300 focus:ring-purple-500'
+                  }`}
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="mt-1 text-red-600 text-sm">{fieldErrors.email}</p>
+              )}
             </div>
 
+            {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -108,8 +142,11 @@ export default function SignIn() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  required
-                  className="pl-10 pr-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                  className={`pl-10 pr-10 w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all ${
+                    fieldErrors.password
+                      ? 'border-red-500 focus:ring-red-300'
+                      : 'border-gray-300 focus:ring-purple-500'
+                  }`}
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
@@ -117,13 +154,18 @@ export default function SignIn() {
                 <button
                   type="button"
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword(prev => !prev)}
+                  tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="mt-1 text-red-600 text-sm">{fieldErrors.password}</p>
+              )}
             </div>
 
+            {/* Forgot Password Link */}
             <div className="flex items-center justify-between">
               <Link
                 href="/auth/forgot-password"
@@ -133,10 +175,11 @@ export default function SignIn() {
               </Link>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -149,6 +192,7 @@ export default function SignIn() {
             </button>
           </form>
 
+          {/* Sign Up Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
