@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.font-mono {
+  font-family: var(--font-space-mono), monospace;
+  letter-spacing: -0.03em;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
