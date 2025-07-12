@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
+import { dbConnect } from '@/lib/db';
 import Answer from '@/models/Answer';
 import User from '@/models/User';
 import Vote from '@/models/Vote';
+import Question from '@/models/Question';
+import { notifyQuestionAnswered } from '@/lib/notifications';
 
 export async function GET(request, { params }) {
   try {
@@ -100,6 +102,21 @@ export async function POST(request, { params }) {
 
     // Populate author information for response
     await answer.populate('author', 'username');
+
+    // Create notification for question author
+    try {
+      const question = await Question.findById(questionId).populate('author', 'username');
+      if (question && question.author._id.toString() !== authorId) {
+        await notifyQuestionAnswered(
+          question.author._id,
+          answer.author.username,
+          question.title,
+          questionId
+        );
+      }
+    } catch (error) {
+      console.error('Error creating notification:', error);
+    }
 
     return NextResponse.json({ answer }, { status: 201 });
   } catch (error) {
