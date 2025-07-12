@@ -23,7 +23,6 @@ export async function dbConnect() {
             maxPoolSize: 10,
         };
 
-        // Fix: assign the promise here
         cached.promise = mongoose.connect(MONGODB_URI, opts).then(() => {
             console.log("✅ MongoDB connected");
             return mongoose.connection;
