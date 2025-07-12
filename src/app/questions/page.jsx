@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import parse from 'html-react-parser';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
-export default function QuestionsPage() {
+function QuestionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -209,194 +209,215 @@ export default function QuestionsPage() {
   }, [currentSearch]);
   
   return (
-    <Layout>
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">All Questions</h1>
-          <Link href="/ask-question">
-            <Button className="bg-purple-600 hover:bg-purple-700">
-              Ask Question
-            </Button>
-          </Link>
-        </div>
+    <div className="max-w-5xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">All Questions</h1>
+        <Link href="/ask-question">
+          <Button className="bg-purple-600 hover:bg-purple-700">
+            Ask Question
+          </Button>
+        </Link>
+      </div>
+      
+      {/* Search and filters */}
+      <div className="mb-8">
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="Search questions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-grow"
+          />
+          <Button type="submit">
+            <Search className="h-4 w-4 mr-2" />
+            Search
+          </Button>
+        </form>
         
-        {/* Search and filters */}
-        <div className="mb-8">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Search questions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-grow"
-            />
-            <Button type="submit">
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </form>
-          
-          {currentTag && (
-            <div className="mt-4">
-              <div className="flex items-center">
-                <span className="text-sm text-gray-600 mr-2">Filtered by:</span>
-                <Badge 
-                  className="bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer"
-                  onClick={() => handleTagClick(currentTag)}
-                >
-                  <Tag className="h-3 w-3 mr-1" />
-                  {currentTag}
-                  <span className="ml-1">×</span>
-                </Badge>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex justify-center items-center min-h-[200px]">
-            <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
-        
-        {/* Error state */}
-        {error && !isLoading && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Empty state */}
-        {!isLoading && !error && questions.length === 0 && (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-700">No questions found</h2>
-            <p className="mt-2 text-gray-500">
-              {currentSearch || currentTag 
-                ? "Try adjusting your search or filters" 
-                : "Be the first to ask a question!"}
-            </p>
-            <Link href="/ask-question" className="mt-4 inline-block">
-              <Button className="bg-purple-600 hover:bg-purple-700 mt-4">
-                Ask a Question
-              </Button>
-            </Link>
-          </div>
-        )}
-        
-        {/* Questions list */}
-        {!isLoading && !error && questions.length > 0 && (
-          <div className="space-y-6">
-            {questions.map((question) => (
-              <div key={question._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-6">
-                  <div className="flex">
-                    {/* Vote count */}
-                    <div className="flex flex-col items-center mr-6">
-                      <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg p-2 w-16">
-                        <ArrowUp className="h-5 w-5 text-gray-400" />
-                        <span className="text-lg font-semibold my-1">{question.votes}</span>
-                        <span className="text-xs text-gray-500">votes</span>
-                      </div>
-                      
-                      <div className="flex items-center mt-2 text-sm text-gray-500">
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        <span>{question.answers?.length || 0}</span>
-                      </div>
-                    </div>
-                    
-                    {/* Question content */}
-                    <div className="flex-grow">
-                      <Link href={`/questions/${question._id}`}>
-                        <h2 className="text-xl font-semibold text-gray-900 hover:text-purple-600 transition-colors">
-                          {question.title}
-                        </h2>
-                      </Link>
-                      
-                      <div className="mt-3 text-gray-600 prose prose-sm max-w-none overflow-hidden">
-                        {parse(getHTMLPreview(question.description))}
-                      </div>
-                      
-                      {/* Tags */}
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {question.tags?.map(tag => (
-                          <Badge 
-                            key={tag} 
-                            className="bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer"
-                            onClick={() => handleTagClick(tag)}
-                          >
-                            <Tag className="h-3 w-3 mr-1" />
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      
-                      {/* Question metadata */}
-                      <div className="mt-4 flex justify-between items-center">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>
-                            {question.createdAt ? 
-                              formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 
-                              'Unknown date'}
-                          </span>
-                        </div>
-                        
-                        {/* Author info */}
-                        {question.author && (
-                          <div className="flex items-center">
-                            <Avatar className="h-6 w-6 mr-2">
-                              <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
-                                {question.author.name?.[0]?.toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm text-gray-700">{question.author.name || 'Anonymous'}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* Pagination */}
-        {!isLoading && !error && pagination.totalPages > 1 && (
-          <div className="flex justify-center mt-8">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page === 1}
-                size="sm"
+        {currentTag && (
+          <div className="mt-4">
+            <div className="flex items-center">
+              <span className="text-sm text-gray-600 mr-2">Filtered by:</span>
+              <Badge 
+                className="bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer"
+                onClick={() => handleTagClick(currentTag)}
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
-              </Button>
-              
-              <div className="text-sm">
-                Page {pagination.page} of {pagination.totalPages}
-              </div>
-              
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={!pagination.hasMore}
-                size="sm"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+                <Tag className="h-3 w-3 mr-1" />
+                {currentTag}
+                <span className="ml-1">×</span>
+              </Badge>
             </div>
           </div>
         )}
       </div>
+      
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+      
+      {/* Error state */}
+      {error && !isLoading && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Empty state */}
+      {!isLoading && !error && questions.length === 0 && (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <h2 className="text-xl font-semibold text-gray-700">No questions found</h2>
+          <p className="mt-2 text-gray-500">
+            {currentSearch || currentTag 
+              ? "Try adjusting your search or filters" 
+              : "Be the first to ask a question!"}
+          </p>
+          <Link href="/ask-question" className="mt-4 inline-block">
+            <Button className="bg-purple-600 hover:bg-purple-700 mt-4">
+              Ask a Question
+            </Button>
+          </Link>
+        </div>
+      )}
+      
+      {/* Questions list */}
+      {!isLoading && !error && questions.length > 0 && (
+        <div className="space-y-6">
+          {questions.map((question) => (
+            <div key={question._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6">
+                <div className="flex">
+                  {/* Vote count */}
+                  <div className="flex flex-col items-center mr-6">
+                    <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg p-2 w-16">
+                      <ArrowUp className="h-5 w-5 text-gray-400" />
+                      <span className="text-lg font-semibold my-1">{question.votes}</span>
+                      <span className="text-xs text-gray-500">votes</span>
+                    </div>
+                    
+                    <div className="flex items-center mt-2 text-sm text-gray-500">
+                      <MessageSquare className="h-4 w-4 mr-1" />
+                      <span>{question.answers?.length || 0}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Question content */}
+                  <div className="flex-grow">
+                    <Link href={`/questions/${question._id}`}>
+                      <h2 className="text-xl font-semibold text-gray-900 hover:text-purple-600 transition-colors">
+                        {question.title}
+                      </h2>
+                    </Link>
+                    
+                    <div className="mt-3 text-gray-600 prose prose-sm max-w-none overflow-hidden">
+                      {parse(getHTMLPreview(question.description))}
+                    </div>
+                    
+                    {/* Tags */}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {question.tags?.map(tag => (
+                        <Badge 
+                          key={tag} 
+                          className="bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer"
+                          onClick={() => handleTagClick(tag)}
+                        >
+                          <Tag className="h-3 w-3 mr-1" />
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                    
+                    {/* Question metadata */}
+                    <div className="mt-4 flex justify-between items-center">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span>
+                          {question.createdAt ? 
+                            formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 
+                            'Unknown date'}
+                        </span>
+                      </div>
+                      
+                      {/* Author info */}
+                      {question.author && (
+                        <div className="flex items-center">
+                          <Avatar className="h-6 w-6 mr-2">
+                            <AvatarFallback className="bg-purple-100 text-purple-800 text-xs">
+                              {question.author.name?.[0]?.toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-gray-700">{question.author.name || 'Anonymous'}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Pagination */}
+      {!isLoading && !error && pagination.totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              size="sm"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            
+            <div className="text-sm">
+              Page {pagination.page} of {pagination.totalPages}
+            </div>
+            
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={!pagination.hasMore}
+              size="sm"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <Layout>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="ml-2 text-gray-600">Loading...</span>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+export default function QuestionsPage() {
+  return (
+    <Layout>
+      <Suspense fallback={<LoadingFallback />}>
+        <QuestionsContent />
+      </Suspense>
     </Layout>
   );
 }
