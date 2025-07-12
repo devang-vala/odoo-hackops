@@ -21,9 +21,13 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Current timestamp and user for debug info
+  const currentTime = "2025-07-12 10:54:04";
+  const currentUser = "devang-vala";
+
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    // Clear that field’s error on change
+    // Clear that field's error on change
     setFieldErrors(prev => ({ ...prev, [e.target.name]: '' }));
     setGlobalError('');
   };
@@ -78,29 +82,24 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-700 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pb-10">
+      {/* Logo and Header */}
+      <div className="mb-10 w-full max-w-md text-center">
+        
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Sign In
+        </h1>
+        <p className="text-gray-600">
+          Welcome back! Sign in to your account
+        </p>
+      </div>
 
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">S</span>
-            </div>
-          </div>
-          <h2 className="mt-6 text-3xl font-bold text-white">
-            Welcome back to StackIt
-          </h2>
-          <p className="mt-2 text-purple-100">
-            Sign in to your account to continue
-          </p>
-        </div>
-
-        {/* Form */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+      {/* Form Container */}
+      <div className="w-full max-w-md">
+        <div className="bg-white border-2 border-gray-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] p-6 sm:p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {globalError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-3 text-sm">
                 {globalError}
               </div>
             )}
@@ -116,10 +115,10 @@ export default function SignIn() {
                   id="email"
                   name="email"
                   type="email"
-                  className={`pl-10 w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all ${
+                  className={`pl-10 w-full px-4 py-3 border-2 focus:outline-none transition-all ${
                     fieldErrors.email
-                      ? 'border-red-500 focus:ring-red-300'
-                      : 'border-gray-300 focus:ring-purple-500'
+                      ? 'border-red-300 focus:border-red-500'
+                      : 'border-gray-200 focus:border-[#00d447]'
                   }`}
                   placeholder="Enter your email"
                   value={formData.email}
@@ -142,10 +141,10 @@ export default function SignIn() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  className={`pl-10 pr-10 w-full px-4 py-3 border rounded-lg focus:ring-2 transition-all ${
+                  className={`pl-10 pr-10 w-full px-4 py-3 border-2 focus:outline-none transition-all ${
                     fieldErrors.password
-                      ? 'border-red-500 focus:ring-red-300'
-                      : 'border-gray-300 focus:ring-purple-500'
+                      ? 'border-red-300 focus:border-red-500'
+                      : 'border-gray-200 focus:border-[#00d447]'
                   }`}
                   placeholder="Enter your password"
                   value={formData.password}
@@ -165,47 +164,40 @@ export default function SignIn() {
               )}
             </div>
 
-            {/* Forgot Password Link */}
-            <div className="flex items-center justify-between">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-purple-600 hover:text-purple-500 transition-colors"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-
             {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full px-4 py-3 border-2 border-[#00d447] bg-[#00d447] text-white font-medium hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:translate-x-0 disabled:hover:shadow-none"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin mx-auto"></div>
               ) : (
-                <>
+                <div className="flex items-center justify-center">
                   Sign In
-                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </>
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </div>
               )}
             </button>
-          </form>
 
-          {/* Sign Up Link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link
-                href="/auth/signup"
-                className="font-medium text-purple-600 hover:text-purple-500 transition-colors"
-              >
-                Sign up here
-              </Link>
-            </p>
-          </div>
+            {/* Sign Up Link */}
+            <div className="pt-2 text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link
+                  href="/auth/signup"
+                  className="font-medium text-[#00d447] hover:underline transition-colors"
+                >
+                  Sign up here
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
       </div>
+      
+      {/* Background Grid Pattern */}
+      <div className="bg-grid-pattern fixed inset-0 z-[-1] opacity-[0.02]"></div>
     </div>
   );
 }
