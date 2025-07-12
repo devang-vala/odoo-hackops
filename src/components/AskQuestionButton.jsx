@@ -1,19 +1,11 @@
-'use client';
+import Link from 'next/link';
 
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-
-export default function AskQuestionButton() {
-  const router = useRouter();
-
+export default function AskQuestionButton({ className = '' }) {
   return (
-    <Button 
-      onClick={() => router.push('/ask-question')}
-      className="bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
-    >
-      <PlusCircle className="h-5 w-5" />
-      Ask Question
-    </Button>
+    <Link href="/ask-question">
+      <button className={`px-4 py-2 border-2 border-[#00d447] bg-[#00d447] text-white font-medium hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all ${className}`}>
+        Ask Question
+      </button>
+    </Link>
   );
 }
