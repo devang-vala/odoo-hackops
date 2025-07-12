@@ -43,11 +43,14 @@ export default function Layout({ children }) {
                 <>
                   {/* Ask Question Button */}
                   <Link
-                    href="/ask"
+                    href="/ask-question"
                     className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200 font-medium"
                   >
                     Ask Question
                   </Link>
+<Link href="/questions" className="text-gray-600 hover:text-purple-600">
+  Questions
+</Link>
 
                   {/* Notifications */}
                   <button className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors">

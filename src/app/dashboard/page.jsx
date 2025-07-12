@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Layout from '@/components/Layout';
+import AskQuestionButton from '@/components/AskQuestionButton';
 import { Award, MessageSquare, Users, TrendingUp } from 'lucide-react';
 
 export default function Dashboard() {
@@ -50,16 +51,19 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            <div className="hidden md:block">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-4xl font-bold">
+            <div className="hidden md:flex items-center space-x-4">
+              <AskQuestionButton />
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-2xl font-bold">
                   {session.user.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
             </div>
           </div>
-        </div>
-
+          <div className="mt-4 md:hidden">
+            <AskQuestionButton />
+          </div>
+              </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
