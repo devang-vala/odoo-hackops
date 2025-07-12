@@ -5,6 +5,7 @@ import User from '@/models/User';
 import Vote from '@/models/Vote';
 import Question from '@/models/Question';
 import { notifyQuestionAnswered } from '@/lib/notifications';
+import { checkProfanity } from '../../../questions/route';
 
 export async function GET(request, { params }) {
   try {
@@ -91,11 +92,17 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: 'Content and author ID are required' }, { status: 400 });
     }
 
+    // Perform profanity check
+    const { hasProfanity } = await checkProfanity(content);
+    const isApproved = !hasProfanity;
+
     const answer = new Answer({
       content,
       author: authorId,
       question: questionId,
-      votes: 0
+      votes: 0,
+      hasProfanity,
+      isApproved,
     });
 
     await answer.save();
