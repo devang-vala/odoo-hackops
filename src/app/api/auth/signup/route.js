@@ -1,83 +1,77 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { ZodError } from 'zod';
 import { dbConnect } from '@/lib/db';
 import User from '@/models/User';
+import { validateUserInput } from '@/lib/validation/userValidation';
 
 export async function POST(request) {
   try {
-    const { name, email, password } = await request.json();
+    // 1) Parse & validate incoming JSON
+    const payload = await request.json();
+    const userData = validateUserInput(payload);
+    const { name, email, password, role } = userData;
 
-    // Validation
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: 'Name, email, and password are required' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
-      );
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address' },
-        { status: 400 }
-      );
-    }
-
+    // 2) Connect to MongoDB via Mongoose
     await dbConnect();
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
+    // 3) Check for existing email
+    const existing = await User.findOne({ email });
+    if (existing) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
         { status: 409 }
       );
     }
 
-    // Hash password
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // 4) Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Determine role based on email
-    const isAdmin = email.toLowerCase().endsWith('.admin@gmail.com');
+    // 5) Determine role (Zod has already defaulted it, but here’s an example override)
+    const isAdminEmail = email.endsWith('.admin@gmail.com');
+    const finalRole = isAdminEmail ? 'admin' : role;
 
-    // Create user
-    const newUser = new User({
-      name: name.trim(),
-      email: email.toLowerCase(),
+    // 6) Create & save user
+    const newUser = await User.create({
+      name,
+      email,
       password: hashedPassword,
-      role: isAdmin ? 'admin' : 'user',
+      role: finalRole,
+      // other fields (notifications, counters, etc.) will use your schema defaults
     });
 
-    await newUser.save();
-
-    // Return user data (without password)
-    const userData = {
+    // 7) Strip out sensitive data before replying
+    const safeUser = {
       id: newUser._id.toString(),
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
-      reputation: newUser.reputation,
       questionsAsked: newUser.questionsAsked,
       answersGiven: newUser.answersGiven,
-      createdAt: newUser.createdAt
+      isActive: newUser.isActive,
+      createdAt: newUser.createdAt,
     };
 
-    return NextResponse.json({
-      message: 'User created successfully',
-      user: userData
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Signup error:', error);
+    return NextResponse.json(
+      { message: 'User created successfully', user: safeUser },
+      { status: 201 }
+    );
+  } catch (err) {
+    // 400–level: validation errors
+    if (err instanceof ZodError) {
+      const fieldErrors = err.flatten().fieldErrors;
+      return NextResponse.json({ errors: fieldErrors }, { status: 400 });
+    }
+    // 409: duplicate key elsewhere
+    if (err.code === 11000) {
+      const dupField = Object.keys(err.keyPattern || {})[0] || 'field';
+      return NextResponse.json(
+        { error: `${dupField} already in use` },
+        { status: 409 }
+      );
+    }
+    // 500: fallback
+    console.error('Signup error:', err);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
