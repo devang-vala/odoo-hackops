@@ -1,348 +1,372 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import parse from 'html-react-parser';
-import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import ContentFilter from '@/components/ui/ContentFilter';
-import ThreadedComment from '@/components/ui/ThreadedComment';
-import { 
-  ArrowUp, 
-  ArrowDown, 
-  MessageSquare, 
-  Share2, 
-  Bookmark, 
-  Clock, 
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import parse from "html-react-parser"
+import Layout from "@/components/Layout"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import ContentFilter from "@/components/ui/ContentFilter"
+import ThreadedComment from "@/components/ui/ThreadedComment"
+import {
+  ArrowUp,
+  ArrowDown,
+  MessageSquare,
+  Clock,
   Tag,
   ThumbsUp,
   AlertCircle,
   Check,
   Send,
-  Loader2
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'react-hot-toast';
+  Loader2,
+} from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import { toast } from "react-hot-toast"
 
 export default function QuestionDetailPage() {
-  const { id } = useParams();
-  const { data: session } = useSession();
-  const router = useRouter();
-  
+  const { id } = useParams()
+  const { data: session } = useSession()
+  const router = useRouter()
+
   // Question state
-  const [question, setQuestion] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
+  const [question, setQuestion] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+
   // Answers state
-  const [answers, setAnswers] = useState([]);
-  const [answersLoading, setAnswersLoading] = useState(false);
-  const [answerFilter, setAnswerFilter] = useState('newest');
-  
+  const [answers, setAnswers] = useState([])
+  const [answersLoading, setAnswersLoading] = useState(false)
+  const [answerFilter, setAnswerFilter] = useState("newest")
+
   // Comments state
-  const [questionComments, setQuestionComments] = useState([]);
-  const [questionCommentsLoading, setQuestionCommentsLoading] = useState(false);
-  const [questionCommentFilter, setQuestionCommentFilter] = useState('newest');
-  
+  const [questionComments, setQuestionComments] = useState([])
+  const [questionCommentsLoading, setQuestionCommentsLoading] = useState(false)
+  const [questionCommentFilter, setQuestionCommentFilter] = useState("newest")
+
   // Form states
-  const [answerContent, setAnswerContent] = useState('');
-  const [questionComment, setQuestionComment] = useState('');
-  const [answerComment, setAnswerComment] = useState('');
-  const [selectedAnswerId, setSelectedAnswerId] = useState(null);
-  const [replyingTo, setReplyingTo] = useState(null);
-  
+  const [answerContent, setAnswerContent] = useState("")
+  const [questionComment, setQuestionComment] = useState("")
+
   // Loading states
-  const [submittingAnswer, setSubmittingAnswer] = useState(false);
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [submittingReply, setSubmittingReply] = useState(false);
+  const [submittingAnswer, setSubmittingAnswer] = useState(false)
+  const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Voting states
+  const [questionUserVote, setQuestionUserVote] = useState(0)
+  const [answerUserVotes, setAnswerUserVotes] = useState({})
+  const [voteLoading, setVoteLoading] = useState({})
 
   // Fetch question data
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
-        setIsLoading(true);
-        const response = await fetch(`/api/questions/${id}`);
-        
+        setIsLoading(true)
+        const response = await fetch(`/api/questions/${id}`)
+
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch question');
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to fetch question")
         }
-        
-        const data = await response.json();
-        setQuestion(data);
+
+        const data = await response.json()
+        setQuestion(data)
       } catch (err) {
-        console.error('Error fetching question:', err);
-        setError(err.message || 'An error occurred while fetching the question');
+        console.error("Error fetching question:", err)
+        setError(err.message || "An error occurred while fetching the question")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
     if (id) {
-      fetchQuestion();
+      fetchQuestion()
     }
-  }, [id]);
+  }, [id])
 
   // Fetch answers
   const fetchAnswers = async (filter = answerFilter) => {
     try {
-      setAnswersLoading(true);
+      setAnswersLoading(true)
       const params = new URLSearchParams({
         filter,
-        ...(session?.user?.id && { userId: session.user.id })
-      });
-      
-      const response = await fetch(`/api/questions/${id}/answers?${params}`);
+        ...(session?.user?.id && { userId: session.user.id }),
+      })
+
+      const response = await fetch(`/api/questions/${id}/answers?${params}`)
       if (response.ok) {
-        const data = await response.json();
-        setAnswers(data.answers);
+        const data = await response.json()
+        setAnswers(data.answers)
       }
     } catch (error) {
-      console.error('Error fetching answers:', error);
+      console.error("Error fetching answers:", error)
     } finally {
-      setAnswersLoading(false);
+      setAnswersLoading(false)
     }
-  };
+  }
 
   // Fetch question comments
   const fetchQuestionComments = async (filter = questionCommentFilter) => {
     try {
-      setQuestionCommentsLoading(true);
+      setQuestionCommentsLoading(true)
       const params = new URLSearchParams({
         filter,
-        ...(session?.user?.id && { userId: session.user.id })
-      });
-      
-      const response = await fetch(`/api/questions/${id}/comments?${params}`);
+        ...(session?.user?.id && { userId: session.user.id }),
+      })
+
+      const response = await fetch(`/api/questions/${id}/comments?${params}`)
       if (response.ok) {
-        const data = await response.json();
-        setQuestionComments(data.comments);
+        const data = await response.json()
+        setQuestionComments(data.comments)
       }
     } catch (error) {
-      console.error('Error fetching question comments:', error);
+      console.error("Error fetching question comments:", error)
     } finally {
-      setQuestionCommentsLoading(false);
+      setQuestionCommentsLoading(false)
     }
-  };
+  }
 
   // Load answers and comments when question loads
   useEffect(() => {
     if (question) {
-      fetchAnswers();
-      fetchQuestionComments();
+      fetchAnswers()
+      fetchQuestionComments()
     }
-  }, [question]);
+  }, [question])
 
   // Refetch answers when filter changes
   useEffect(() => {
     if (question) {
-      fetchAnswers(answerFilter);
+      fetchAnswers(answerFilter)
     }
-  }, [answerFilter]);
+  }, [answerFilter])
 
   // Refetch question comments when filter changes
   useEffect(() => {
     if (question) {
-      fetchQuestionComments(questionCommentFilter);
+      fetchQuestionComments(questionCommentFilter)
     }
-  }, [questionCommentFilter]);
+  }, [questionCommentFilter])
 
   // Handle answer submission
   const handleAnswerSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!session?.user?.id) {
-      router.push('/auth/signin');
-      return;
+      router.push("/auth/signin")
+      return
     }
 
     try {
-      setSubmittingAnswer(true);
+      setSubmittingAnswer(true)
       const response = await fetch(`/api/questions/${id}/answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: answerContent,
-          authorId: session.user.id
-        })
-      });
+          authorId: session.user.id,
+        }),
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        setAnswers(prev => [data.answer, ...prev]);
-        setAnswerContent('');
-        // Refresh answers to get updated list
-        fetchAnswers();
+        setAnswerContent("")
+        fetchAnswers()
+        toast.success("Answer posted successfully!")
+      } else {
+        toast.error("Failed to post answer")
       }
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      console.error("Error submitting answer:", error)
+      toast.error("Error submitting answer")
     } finally {
-      setSubmittingAnswer(false);
+      setSubmittingAnswer(false)
     }
-  };
+  }
 
   // Handle question comment submission
   const handleQuestionCommentSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!session?.user?.id) {
-      router.push('/auth/signin');
-      return;
+      router.push("/auth/signin")
+      return
     }
 
     try {
-      setSubmittingComment(true);
+      setSubmittingComment(true)
       const response = await fetch(`/api/questions/${id}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: questionComment,
           authorId: session.user.id,
-          parentCommentId: replyingTo?.commentId || null
-        })
-      });
+        }),
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        setQuestionComments(prev => [data.comment, ...prev]);
-        setQuestionComment('');
-        setReplyingTo(null);
-        // Refresh comments to get updated list
-        fetchQuestionComments();
+        setQuestionComment("")
+        fetchQuestionComments()
+        toast.success("Comment posted successfully!")
+      } else {
+        toast.error("Failed to post comment")
       }
     } catch (error) {
-      console.error('Error submitting comment:', error);
+      console.error("Error submitting comment:", error)
+      toast.error("Error submitting comment")
     } finally {
-      setSubmittingComment(false);
+      setSubmittingComment(false)
     }
-  };
+  }
 
-  // Handle answer comment submission
-  const handleAnswerCommentSubmit = async (answerId) => {
+  // Handle question comment replies
+  const handleQuestionCommentReply = async (parentCommentId, content) => {
     if (!session?.user?.id) {
-      router.push('/auth/signin');
-      return;
+      router.push("/auth/signin")
+      return
     }
 
     try {
-      setSubmittingReply(true);
-      const response = await fetch(`/api/answers/${answerId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(`/api/questions/${id}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: answerComment,
+          content,
           authorId: session.user.id,
-          parentCommentId: replyingTo?.commentId || null
-        })
-      });
+          parentCommentId,
+        }),
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        // Update the specific answer's comments
-        setAnswers(prev => prev.map(answer => 
-          answer._id === answerId 
-            ? { ...answer, comments: [data.comment, ...(answer.comments || [])] }
-            : answer
-        ));
-        setAnswerComment('');
-        setReplyingTo(null);
+        fetchQuestionComments()
+        toast.success("Reply posted successfully!")
+      } else {
+        toast.error("Failed to post reply")
       }
     } catch (error) {
-      console.error('Error submitting reply:', error);
-    } finally {
-      setSubmittingReply(false);
+      console.error("Error submitting reply:", error)
+      toast.error("Error submitting reply")
     }
-  };
+  }
 
-  // Handle voting
-  const [questionUserVote, setQuestionUserVote] = useState(0);
-  const [answerUserVotes, setAnswerUserVotes] = useState({}); // { [answerId]: vote }
-  const [voteLoading, setVoteLoading] = useState({}); // { [id]: true/false }
-  const [replyContext, setReplyContext] = useState(null); // { type: 'question'|'answer', id, authorName }
+  // Handle answer comment replies
+  const handleAnswerCommentReply = async (answerId, parentCommentId, content) => {
+    if (!session?.user?.id) {
+      router.push("/auth/signin")
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/answers/${answerId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          authorId: session.user.id,
+          parentCommentId,
+        }),
+      })
+
+      if (response.ok) {
+        fetchAnswers() // Refresh answers to get updated comments
+        toast.success("Reply posted successfully!")
+      } else {
+        toast.error("Failed to post reply")
+      }
+    } catch (error) {
+      console.error("Error submitting reply:", error)
+      toast.error("Error submitting reply")
+    }
+  }
 
   // Fetch user vote for question
   useEffect(() => {
     if (session?.user?.id && question?._id) {
       fetch(`/api/votes?type=question&itemId=${question._id}&userId=${session.user.id}`)
-        .then(res => res.json())
-        .then(data => setQuestionUserVote(data.userVote || 0));
+        .then((res) => res.json())
+        .then((data) => setQuestionUserVote(data.userVote || 0))
+        .catch((err) => console.error("Error fetching user vote:", err))
     }
-  }, [session?.user?.id, question?._id]);
+  }, [session?.user?.id, question?._id])
 
   // Fetch user votes for answers
   useEffect(() => {
     if (session?.user?.id && answers.length > 0) {
       Promise.all(
-        answers.map(a =>
+        answers.map((a) =>
           fetch(`/api/votes?type=answer&itemId=${a._id}&userId=${session.user.id}`)
-            .then(res => res.json())
-            .then(data => [a._id, data.userVote || 0])
-        )
-      ).then(results => {
-        setAnswerUserVotes(Object.fromEntries(results));
-      });
+            .then((res) => res.json())
+            .then((data) => [a._id, data.userVote || 0]),
+        ),
+      )
+        .then((results) => {
+          setAnswerUserVotes(Object.fromEntries(results))
+        })
+        .catch((err) => console.error("Error fetching user votes:", err))
     }
-  }, [session?.user?.id, answers]);
+  }, [session?.user?.id, answers])
 
   // Voting handler
   const handleVote = async (type, itemId, value) => {
-    console.log('Voting:', { type, itemId, value, voteLoading });
     if (!session?.user?.id) {
-      router.push('/auth/signin');
-      return;
+      router.push("/auth/signin")
+      return
     }
-    setVoteLoading(v => ({ ...v, [itemId]: true }));
-    try {
-      const res = await fetch('/api/votes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, itemId, userId: session.user.id, value })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Vote failed');
-      if (type === 'question') {
-        setQuestion(prev => ({ ...prev, votes: data.totalVotes }));
-        setQuestionUserVote(data.userVote);
-      } else {
-        setAnswers(prev => prev.map(a => a._id === itemId ? { ...a, votes: data.totalVotes } : a));
-        setAnswerUserVotes(prev => ({ ...prev, [itemId]: data.userVote }));
-      }
-    } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setVoteLoading(v => ({ ...v, [itemId]: false }));
-    }
-  };
 
-  // Reply context helpers
-  const openReply = (type, id, authorName) => setReplyContext({ type, id, authorName });
-  const closeReply = () => setReplyContext(null);
-  const isReplying = (type, id) => replyContext && replyContext.type === type && replyContext.id === id;
+    setVoteLoading((v) => ({ ...v, [itemId]: true }))
+    try {
+      const res = await fetch("/api/votes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, itemId, userId: session.user.id, value }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error || "Vote failed")
+
+      if (type === "question") {
+        setQuestion((prev) => ({ ...prev, votes: data.totalVotes }))
+        setQuestionUserVote(data.userVote)
+      } else {
+        setAnswers((prev) => prev.map((a) => (a._id === itemId ? { ...a, votes: data.totalVotes } : a)))
+        setAnswerUserVotes((prev) => ({ ...prev, [itemId]: data.userVote }))
+      }
+
+      toast.success("Vote recorded!")
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setVoteLoading((v) => ({ ...v, [itemId]: false }))
+    }
+  }
 
   // Handle answer acceptance
   const handleAcceptAnswer = async (answerId) => {
     if (!session?.user?.id || question.author._id !== session.user.id) {
-      return;
+      return
     }
 
     try {
       const response = await fetch(`/api/answers/${answerId}/accept`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' }
-      });
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      })
 
       if (response.ok) {
-        setAnswers(prev => prev.map(answer => ({
-          ...answer,
-          isAccepted: answer._id === answerId
-        })));
+        setAnswers((prev) =>
+          prev.map((answer) => ({
+            ...answer,
+            isAccepted: answer._id === answerId,
+          })),
+        )
+        toast.success("Answer accepted!")
+      } else {
+        toast.error("Failed to accept answer")
       }
     } catch (error) {
-      console.error('Error accepting answer:', error);
+      console.error("Error accepting answer:", error)
+      toast.error("Error accepting answer")
     }
-  };
+  }
 
   if (isLoading) {
     return (
@@ -352,7 +376,7 @@ export default function QuestionDetailPage() {
           <span className="ml-2 text-gray-600">Loading question...</span>
         </div>
       </Layout>
-    );
+    )
   }
 
   if (error) {
@@ -364,18 +388,14 @@ export default function QuestionDetailPage() {
             <div>
               <h3 className="text-lg font-medium text-red-800">Error Loading Question</h3>
               <p className="text-sm text-red-700 mt-1">{error}</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => router.back()}
-              >
+              <Button variant="outline" className="mt-4 bg-transparent" onClick={() => router.back()}>
                 Go Back
               </Button>
             </div>
           </div>
         </div>
       </Layout>
-    );
+    )
   }
 
   if (!question) {
@@ -384,15 +404,12 @@ export default function QuestionDetailPage() {
         <div className="max-w-4xl mx-auto text-center py-12">
           <h2 className="text-2xl font-semibold text-gray-700">Question Not Found</h2>
           <p className="mt-2 text-gray-500">The question you're looking for doesn't exist or has been removed.</p>
-          <Button 
-            className="mt-6 bg-purple-600 hover:bg-purple-700"
-            onClick={() => router.push('/questions')}
-          >
+          <Button className="mt-6 bg-purple-600 hover:bg-purple-700" onClick={() => router.push("/questions")}>
             Browse All Questions
           </Button>
         </div>
       </Layout>
-    );
+    )
   }
 
   return (
@@ -401,34 +418,42 @@ export default function QuestionDetailPage() {
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm text-gray-500">
           <ol className="flex items-center space-x-2">
-            <li><a href="/" className="hover:text-purple-600">Home</a></li>
+            <li>
+              <a href="/" className="hover:text-purple-600">
+                Home
+              </a>
+            </li>
             <li>/</li>
-            <li><a href="/questions" className="hover:text-purple-600">Questions</a></li>
+            <li>
+              <a href="/questions" className="hover:text-purple-600">
+                Questions
+              </a>
+            </li>
             <li>/</li>
             <li className="truncate max-w-[200px] sm:max-w-xs">{question.title}</li>
           </ol>
         </nav>
-        
+
         <article className="bg-white rounded-xl shadow-sm overflow-hidden">
           {/* Question header */}
           <div className="p-6 border-b">
             <h1 className="text-2xl font-bold text-gray-900 mb-3">{question.title}</h1>
-            
+
             <div className="flex flex-wrap items-center text-sm text-gray-500 gap-x-4 gap-y-2">
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-1" />
                 <span>
-                  {question.createdAt ? 
-                    formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 
-                    'Unknown date'}
+                  {question.createdAt
+                    ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true })
+                    : "Unknown date"}
                 </span>
               </div>
-              
+
               <div className="flex items-center">
                 <MessageSquare className="h-4 w-4 mr-1" />
                 <span>{answers.length} answers</span>
               </div>
-              
+
               <div className="flex items-center">
                 <ThumbsUp className="h-4 w-4 mr-1" />
                 <span>{question.votes || 0} votes</span>
@@ -440,67 +465,59 @@ export default function QuestionDetailPage() {
           <div className="flex flex-col md:flex-row p-6">
             {/* Vote controls */}
             <div className="flex md:flex-col items-center md:mr-6 mb-4 md:mb-0 justify-center md:justify-start">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleVote('question', question._id, 1)}
-                className={questionUserVote === 1 ? 'bg-purple-100 text-purple-700' : ''}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleVote("question", question._id, 1)}
+                className={questionUserVote === 1 ? "bg-purple-100 text-purple-700" : ""}
                 disabled={!!voteLoading[question._id]}
               >
                 <ArrowUp className="h-6 w-6 text-gray-500" />
               </Button>
-              
-              <span className="text-xl font-medium mx-4 md:my-2 md:mx-0 text-gray-700">
-                {question.votes || 0}
-              </span>
-              
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleVote('question', question._id, -1)}
-                className={questionUserVote === -1 ? 'bg-purple-100 text-purple-700' : ''}
+
+              <span className="text-xl font-medium mx-4 md:my-2 md:mx-0 text-gray-700">{question.votes || 0}</span>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleVote("question", question._id, -1)}
+                className={questionUserVote === -1 ? "bg-purple-100 text-purple-700" : ""}
                 disabled={!!voteLoading[question._id]}
               >
                 <ArrowDown className="h-6 w-6 text-gray-500" />
               </Button>
             </div>
-            
+
             {/* Question content */}
             <div className="flex-grow">
-              <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">
-                {parse(question.description)}
-              </div>
-              
+              <div className="prose prose-sm md:prose-base lg:prose-lg max-w-none">{parse(question.description)}</div>
+
               {/* Tags */}
               <div className="mt-6 flex flex-wrap gap-2">
-                {question.tags?.map(tag => (
-                  <Badge 
-                    key={tag} 
-                    className="bg-purple-100 text-purple-800"
-                  >
+                {question.tags?.map((tag) => (
+                  <Badge key={tag} className="bg-purple-100 text-purple-800">
                     <Tag className="h-3 w-3 mr-1" />
                     {tag}
                   </Badge>
                 ))}
               </div>
-              
+
               {/* Author info */}
               <div className="mt-8 flex items-start justify-end">
                 <div className="bg-blue-50 rounded-lg p-4 max-w-xs">
                   <div className="flex items-center">
                     <Avatar className="h-10 w-10 border border-blue-200">
                       <AvatarFallback className="bg-blue-200 text-blue-700">
-                        {question.author?.name?.[0]?.toUpperCase() || 'U'}
+                        {question.author?.name?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {question.author?.name || 'Anonymous'}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900">{question.author?.name || "Anonymous"}</p>
                       <p className="text-xs text-gray-500">
-                        Asked {question.createdAt ? 
-                          formatDistanceToNow(new Date(question.createdAt), { addSuffix: true }) : 
-                          'some time ago'}
+                        Asked{" "}
+                        {question.createdAt
+                          ? formatDistanceToNow(new Date(question.createdAt), { addSuffix: true })
+                          : "some time ago"}
                       </p>
                     </div>
                   </div>
@@ -508,7 +525,7 @@ export default function QuestionDetailPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Question Comments Section */}
           <div className="bg-gray-50 p-6 border-t">
             <div className="flex justify-between items-center mb-4">
@@ -516,37 +533,23 @@ export default function QuestionDetailPage() {
               <ContentFilter
                 currentFilter={questionCommentFilter}
                 onFilterChange={setQuestionCommentFilter}
-                filters={['newest', 'oldest', 'mine']}
+                filters={["newest", "oldest", "mine"]}
                 loading={questionCommentsLoading}
               />
             </div>
-            
+
             {/* Comment form */}
             {session && (
               <form onSubmit={handleQuestionCommentSubmit} className="mb-6">
                 <Textarea
                   value={questionComment}
                   onChange={(e) => setQuestionComment(e.target.value)}
-                  placeholder={replyingTo ? `Replying to ${replyingTo.authorName}...` : "Add a comment..."}
+                  placeholder="Add a comment..."
                   className="min-h-[100px] mb-3"
                 />
-                <div className="flex justify-between items-center">
-                  {replyingTo && (
-                    <div className="text-sm text-gray-600">
-                      Replying to <span className="font-medium">{replyingTo.authorName}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setReplyingTo(null)}
-                        className="ml-2"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                  <Button 
-                    type="submit" 
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
                     disabled={!questionComment.trim() || submittingComment}
                     className="bg-purple-600 hover:bg-purple-700"
                   >
@@ -560,7 +563,7 @@ export default function QuestionDetailPage() {
                 </div>
               </form>
             )}
-            
+
             {/* Comments list */}
             {questionCommentsLoading ? (
               <div className="flex justify-center py-4">
@@ -569,50 +572,12 @@ export default function QuestionDetailPage() {
             ) : questionComments.length > 0 ? (
               <div className="space-y-4">
                 {questionComments.map((comment) => (
-                  <div key={comment._id}>
-                    <ThreadedComment
-                      comment={comment}
-                      onReply={(commentId, authorName) => setReplyingTo({ type: 'question', commentId, authorName })}
-                      currentUserId={session?.user?.id}
-                      openReply={(type, commentId, authorName) => setReplyingTo({ type, commentId, authorName })}
-                      closeReply={() => setReplyingTo(null)}
-                      isReplying={replyingTo && replyingTo.commentId === comment._id && replyingTo.type === 'question'}
-                    />
-                    {replyingTo && replyingTo.commentId === comment._id && replyingTo.type === 'question' && comment.author?._id !== session.user.id && (
-                      <form
-                        onSubmit={e => {
-                          e.preventDefault();
-                          handleQuestionCommentSubmit(e);
-                        }}
-                        className="mt-3 p-3 bg-white rounded border"
-                      >
-                        <Textarea
-                          value={questionComment}
-                          onChange={e => setQuestionComment(e.target.value)}
-                          placeholder={`Replying to ${replyingTo.authorName}...`}
-                          className="min-h-[80px] mb-2"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            type="submit"
-                            disabled={!questionComment.trim() || submittingComment}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            {submittingComment ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                            Reply
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setReplyingTo(null)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </form>
-                    )}
-                  </div>
+                  <ThreadedComment
+                    key={comment._id}
+                    comment={comment}
+                    onSubmitReply={handleQuestionCommentReply}
+                    currentUserId={session?.user?.id}
+                  />
                 ))}
               </div>
             ) : (
@@ -620,21 +585,21 @@ export default function QuestionDetailPage() {
             )}
           </div>
         </article>
-        
+
         {/* Answers Section */}
         <section className="mt-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-gray-900">
-              {answers.length} {answers.length === 1 ? 'Answer' : 'Answers'}
+              {answers.length} {answers.length === 1 ? "Answer" : "Answers"}
             </h2>
             <ContentFilter
               currentFilter={answerFilter}
               onFilterChange={setAnswerFilter}
-              filters={['newest', 'oldest', 'top-voted', 'mine']}
+              filters={["newest", "oldest", "top-voted", "mine"]}
               loading={answersLoading}
             />
           </div>
-          
+
           {/* Answer form */}
           {session && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -647,8 +612,8 @@ export default function QuestionDetailPage() {
                   className="min-h-[200px] mb-4"
                 />
                 <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={!answerContent.trim() || submittingAnswer}
                     className="bg-purple-600 hover:bg-purple-700"
                   >
@@ -663,7 +628,7 @@ export default function QuestionDetailPage() {
               </form>
             </div>
           )}
-          
+
           {/* Answers list */}
           {answersLoading ? (
             <div className="flex justify-center py-8">
@@ -677,30 +642,28 @@ export default function QuestionDetailPage() {
                     <div className="flex">
                       {/* Vote controls */}
                       <div className="flex flex-col items-center mr-6">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleVote('answer', answer._id, 1)}
-                          className={answerUserVotes[answer._id] === 1 ? 'bg-purple-100 text-purple-700' : ''}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleVote("answer", answer._id, 1)}
+                          className={answerUserVotes[answer._id] === 1 ? "bg-purple-100 text-purple-700" : ""}
                           disabled={!!voteLoading[answer._id]}
                         >
                           <ArrowUp className="h-4 w-4 text-gray-500" />
                         </Button>
-                        
-                        <span className="text-lg font-medium my-1 text-gray-700">
-                          {answer.votes || 0}
-                        </span>
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => handleVote('answer', answer._id, -1)}
-                          className={answerUserVotes[answer._id] === -1 ? 'bg-purple-100 text-purple-700' : ''}
+
+                        <span className="text-lg font-medium my-1 text-gray-700">{answer.votes || 0}</span>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleVote("answer", answer._id, -1)}
+                          className={answerUserVotes[answer._id] === -1 ? "bg-purple-100 text-purple-700" : ""}
                           disabled={!!voteLoading[answer._id]}
                         >
                           <ArrowDown className="h-4 w-4 text-gray-500" />
                         </Button>
-                        
+
                         {/* Accept answer button */}
                         {session?.user?.id === question.author._id && (
                           <Button
@@ -708,41 +671,39 @@ export default function QuestionDetailPage() {
                             size="icon"
                             onClick={() => handleAcceptAnswer(answer._id)}
                             className={`h-8 w-8 rounded-full mt-2 ${
-                              answer.isAccepted 
-                                ? 'bg-green-100 text-green-600' 
-                                : 'hover:bg-gray-100 text-gray-500'
+                              answer.isAccepted ? "bg-green-100 text-green-600" : "hover:bg-gray-100 text-gray-500"
                             }`}
-                            title={answer.isAccepted ? 'Answer accepted' : 'Accept this answer'}
+                            title={answer.isAccepted ? "Answer accepted" : "Accept this answer"}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
-                      
+
                       {/* Answer content */}
                       <div className="flex-grow">
-                        <div className="prose max-w-none">
-                          {parse(answer.content)}
-                        </div>
-                        
+                        <div className="prose max-w-none">{parse(answer.content)}</div>
+
                         {/* Answer metadata */}
                         <div className="mt-6 flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                               <AvatarFallback className="bg-green-100 text-green-700 text-xs">
-                                {answer.author?.username?.[0]?.toUpperCase() || 'A'}
+                                {answer.author?.username?.[0]?.toUpperCase() || "A"}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="text-sm font-medium">{answer.author?.username || answer.author?.name || 'Anonymous'}</p>
+                              <p className="text-sm font-medium">
+                                {answer.author?.username || answer.author?.name || "Anonymous"}
+                              </p>
                               <p className="text-xs text-gray-500">
-                                {answer.createdAt ? 
-                                  formatDistanceToNow(new Date(answer.createdAt), { addSuffix: true }) : 
-                                  'some time ago'}
+                                {answer.createdAt
+                                  ? formatDistanceToNow(new Date(answer.createdAt), { addSuffix: true })
+                                  : "some time ago"}
                               </p>
                             </div>
                           </div>
-                          
+
                           {answer.isAccepted && (
                             <Badge className="bg-green-100 text-green-800">
                               <Check className="h-3 w-3 mr-1" />
@@ -750,102 +711,25 @@ export default function QuestionDetailPage() {
                             </Badge>
                           )}
                         </div>
-                        
+
                         {/* Answer Comments */}
                         <div className="mt-6 border-t pt-4">
                           <div className="flex justify-between items-center mb-4">
                             <h4 className="text-sm font-medium text-gray-900">Comments</h4>
                           </div>
-                          
-                          {/* Comment form for answer */}
-                          {session && (
-                            <form onSubmit={(e) => { e.preventDefault(); handleAnswerCommentSubmit(answer._id); }} className="mb-4">
-                              <Textarea
-                                value={answerComment}
-                                onChange={(e) => setAnswerComment(e.target.value)}
-                                placeholder={replyingTo ? `Replying to ${replyingTo.authorName}...` : "Add a comment..."}
-                                className="min-h-[80px] mb-2"
-                              />
-                              <div className="flex justify-between items-center">
-                                {replyingTo && (
-                                  <div className="text-sm text-gray-600">
-                                    Replying to <span className="font-medium">{replyingTo.authorName}</span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setReplyingTo(null)}
-                                      className="ml-2"
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
-                                )}
-                                <Button 
-                                  type="submit" 
-                                  disabled={!answerComment.trim() || submittingReply}
-                                  size="sm"
-                                  className="bg-purple-600 hover:bg-purple-700"
-                                >
-                                  {submittingReply ? (
-                                    <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                                  ) : (
-                                    <Send className="w-3 h-3 mr-1" />
-                                  )}
-                                  Comment
-                                </Button>
-                              </div>
-                            </form>
-                          )}
-                          
+
                           {/* Comments list for answer */}
                           {answer.comments && answer.comments.length > 0 && (
                             <div className="space-y-3">
                               {answer.comments.map((comment) => (
-                                <div key={comment._id}>
-                                  <ThreadedComment
-                                    comment={comment}
-                                    onReply={(commentId, authorName) => setReplyingTo({ type: 'answer', commentId, authorName, answerId: answer._id })}
-                                    currentUserId={session?.user?.id}
-                                    openReply={(type, commentId, authorName) => setReplyingTo({ type, commentId, authorName, answerId: answer._id })}
-                                    closeReply={() => setReplyingTo(null)}
-                                    isReplying={replyingTo && replyingTo.commentId === comment._id && replyingTo.type === 'answer' && replyingTo.answerId === answer._id}
-                                  />
-                                  {replyingTo && replyingTo.commentId === comment._id && replyingTo.type === 'answer' && replyingTo.answerId === answer._id && comment.author?._id !== session.user.id && (
-                                    <form
-                                      onSubmit={e => {
-                                        e.preventDefault();
-                                        handleAnswerCommentSubmit(answer._id);
-                                      }}
-                                      className="mt-3 p-3 bg-white rounded border"
-                                    >
-                                      <Textarea
-                                        value={answerComment}
-                                        onChange={e => setAnswerComment(e.target.value)}
-                                        placeholder={`Replying to ${replyingTo.authorName}...`}
-                                        className="min-h-[80px] mb-2"
-                                      />
-                                      <div className="flex gap-2">
-                                        <Button
-                                          type="submit"
-                                          disabled={!answerComment.trim() || submittingReply}
-                                          className="bg-purple-600 hover:bg-purple-700"
-                                        >
-                                          {submittingReply ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                                          Reply
-                                        </Button>
-                                        <Button
-                                          type="button"
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => setReplyingTo(null)}
-                                        >
-                                          Cancel
-                                        </Button>
-                                      </div>
-                                    </form>
-                                  )}
-                                </div>
+                                <ThreadedComment
+                                  key={comment._id}
+                                  comment={comment}
+                                  onSubmitReply={(parentCommentId, content) =>
+                                    handleAnswerCommentReply(answer._id, parentCommentId, content)
+                                  }
+                                  currentUserId={session?.user?.id}
+                                />
                               ))}
                             </div>
                           )}
@@ -861,10 +745,7 @@ export default function QuestionDetailPage() {
               <h3 className="text-lg font-semibold text-gray-700">No answers yet</h3>
               <p className="mt-2 text-gray-500">Be the first to answer this question!</p>
               {!session && (
-                <Button 
-                  className="mt-4 bg-purple-600 hover:bg-purple-700"
-                  onClick={() => router.push('/auth/signin')}
-                >
+                <Button className="mt-4 bg-purple-600 hover:bg-purple-700" onClick={() => router.push("/auth/signin")}>
                   Sign in to Answer
                 </Button>
               )}
@@ -873,5 +754,5 @@ export default function QuestionDetailPage() {
         </section>
       </div>
     </Layout>
-  );
+  )
 }

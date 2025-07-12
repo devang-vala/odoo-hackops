@@ -8,16 +8,13 @@ const commentSchema = new mongoose.Schema({
   question:  { type: mongoose.Schema.Types.ObjectId, ref: "Question" },
   answer:    { type: mongoose.Schema.Types.ObjectId, ref: "Answer" },
 
-  // This enables replies to other comments
-  parentComment: { type: mongoose.Schema.Types.ObjectId, ref: "Comment", default: null },
-
   createdAt: { type: Date, default: Date.now },
 });
 
 // Validation
 commentSchema.pre("save", function (next) {
-  if (!this.question && !this.answer && !this.parentComment) {
-    return next(new Error("Comment must relate to a question, answer, or parent comment"));
+  if (!this.question && !this.answer) {
+    return next(new Error("Comment must relate to a question or answer"));
   }
   next();
 });

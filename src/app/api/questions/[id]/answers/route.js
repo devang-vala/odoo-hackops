@@ -77,16 +77,12 @@ export async function GET(request, context) {
         answersWithVotes.map(async (answer) => {
           const comments = await Comment.find({ answer: answer._id })
             .populate('author', 'username name')
-            .populate('parentComment')
             .sort({ createdAt: -1 })
             .lean();
 
-          // Organize comments into threaded structure
-          const threadedComments = organizeThreadedComments(comments);
-
           return {
             ...answer,
-            comments: threadedComments
+            comments: comments
           };
         })
       );
@@ -99,16 +95,12 @@ export async function GET(request, context) {
       answers.map(async (answer) => {
         const comments = await Comment.find({ answer: answer._id })
           .populate('author', 'username name')
-          .populate('parentComment')
           .sort({ createdAt: -1 })
           .lean();
 
-        // Organize comments into threaded structure
-        const threadedComments = organizeThreadedComments(comments);
-
         return {
           ...answer,
-          comments: threadedComments
+          comments: comments
         };
       })
     );
@@ -169,33 +161,4 @@ export async function POST(request, context) {
     console.error('Error creating answer:', error);
     return NextResponse.json({ error: 'Failed to create answer' }, { status: 500 });
   }
-}
-
-// Helper function to organize comments into a threaded structure
-function organizeThreadedComments(comments) {
-  const commentMap = new Map();
-  const rootComments = [];
-
-  // First pass: create a map of all comments
-  comments.forEach(comment => {
-    commentMap.set(comment._id.toString(), { ...comment, replies: [] });
-  });
-
-  // Second pass: organize into threaded structure
-  comments.forEach(comment => {
-    const commentObj = commentMap.get(comment._id.toString());
-    
-    if (comment.parentComment) {
-      // This is a reply to another comment
-      const parentComment = commentMap.get(comment.parentComment.toString());
-      if (parentComment) {
-        parentComment.replies.push(commentObj);
-      }
-    } else {
-      // This is a root comment
-      rootComments.push(commentObj);
-    }
-  });
-
-  return rootComments;
 }
