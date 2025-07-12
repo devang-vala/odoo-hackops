@@ -3,8 +3,9 @@ import { dbConnect } from '@/lib/db';
 import Question from '@/models/Question';
 import User from '@/models/User';
 
-export async function GET(req, { params }) {
+export async function GET(req, context) {
   try {
+    const { params } = await context;
     const { id } = params;
     
     if (!id) {

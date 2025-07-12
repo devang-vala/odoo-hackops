@@ -6,7 +6,8 @@ import Answer from '@/models/Answer';
 import Question from '@/models/Question';
 import { notifyAnswerCommented, notifyMention, extractMentions } from '@/lib/notifications';
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
+  const { params } = await context;
   try {
     await dbConnect();
     
@@ -39,7 +40,7 @@ export async function GET(request, { params }) {
 
     // Get comments with author information and populate replies
     const comments = await Comment.find(query)
-      .populate('author', 'username')
+      .populate('author', 'username name')
       .populate('parentComment')
       .sort(sortOptions)
       .lean();
@@ -54,7 +55,8 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
+  const { params } = await context;
   try {
     await dbConnect();
     

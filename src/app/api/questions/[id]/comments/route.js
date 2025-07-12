@@ -5,9 +5,10 @@ import User from '@/models/User';
 import Question from '@/models/Question';
 import { notifyQuestionCommented, notifyMention, extractMentions } from '@/lib/notifications';
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
     await dbConnect();
+    const { params } = await context;
     
     const { searchParams } = new URL(request.url);
     const questionId = params.id;
@@ -38,7 +39,7 @@ export async function GET(request, { params }) {
 
     // Get comments with author information and populate replies
     const comments = await Comment.find(query)
-      .populate('author', 'username')
+      .populate('author', 'username name')
       .populate('parentComment')
       .sort(sortOptions)
       .lean();
@@ -53,9 +54,10 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
     await dbConnect();
+    const { params } = await context;
     
     const questionId = params.id;
     const { content, authorId, parentCommentId } = await request.json();
@@ -145,4 +147,4 @@ function organizeThreadedComments(comments) {
   });
 
   return rootComments;
-} 
+}
