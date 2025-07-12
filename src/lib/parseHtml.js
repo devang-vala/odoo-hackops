@@ -1,6 +1,8 @@
 import parse from 'html-react-parser';
 
 export function parseHtml(html) {
+  if (!html) return null;
+  
   return parse(html, {
     attributeConverter: (attributeName, attributeValue) => {
       // Convert class attributes to className for React
