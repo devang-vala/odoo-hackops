@@ -47,55 +47,56 @@ export default function Home() {
   return (
     <Layout>
       <div className="space-y-8">
-        {/* Hero Section */}
+        {/* Hero and Stats Section */}
         {!session && (
-          <div className="text-center py-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl text-white">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Welcome to StackIt
-            </h1>
-            <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-3xl mx-auto">
-              A minimal Q&A forum platform for collaborative learning and structured knowledge sharing
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/auth/signup"
-                className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Get Started
-              </Link>
-              <Link
-                href="/auth/signin"
-                className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
-              >
-                Sign In
-              </Link>
+          <div>
+            <div className="text-center py-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl text-white mb-8">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                Welcome to StackIt
+              </h1>
+              <p className="text-xl md:text-2xl text-purple-100 mb-8 max-w-3xl mx-auto">
+                A minimal Q&A forum platform for collaborative learning and structured knowledge sharing
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/auth/signup"
+                  className="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                >
+                  Get Started
+                </Link>
+                <Link
+                  href="/auth/signin"
+                  className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors"
+                >
+                  Sign In
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                <MessageSquare className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">3.5k+</div>
+                <div className="text-sm text-gray-600">Questions</div>
+              </div>
+              <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">8.2k+</div>
+                <div className="text-sm text-gray-600">Answers</div>
+              </div>
+              <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">1.2k+</div>
+                <div className="text-sm text-gray-600">Users</div>
+              </div>
+              <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+                <TrendingUp className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">95%</div>
+                <div className="text-sm text-gray-600">Solved</div>
+              </div>
             </div>
           </div>
         )}
-
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <MessageSquare className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">3.5k+</div>
-            <div className="text-sm text-gray-600">Questions</div>
-          </div>
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <Award className="w-8 h-8 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">8.2k+</div>
-            <div className="text-sm text-gray-600">Answers</div>
-          </div>
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">1.2k+</div>
-            <div className="text-sm text-gray-600">Users</div>
-          </div>
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-            <TrendingUp className="w-8 h-8 text-orange-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">95%</div>
-            <div className="text-sm text-gray-600">Solved</div>
-          </div>
-        </div>
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-8">
