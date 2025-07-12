@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./Providers";
-import { Icon, icons } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +29,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} bg-grid-pattern antialiased`}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <Navbar/>
+          <div className="pt-24">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );
