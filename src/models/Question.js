@@ -8,6 +8,8 @@ const questionSchema = new mongoose.Schema({
   answers:     [{ type: mongoose.Schema.Types.ObjectId, ref: "Answer" }],
   acceptedAnswer: { type: mongoose.Schema.Types.ObjectId, ref: "Answer" },
   votes:       { type: Number, default: 0 },
+  hasProfanity: { type: Boolean, default: false },
+  isApproved:  { type: Boolean, default: true },
 }, { timestamps: true });
 
 export default mongoose.models.Question || mongoose.model("Question", questionSchema);

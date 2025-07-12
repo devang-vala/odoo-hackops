@@ -4,6 +4,38 @@ import { dbConnect } from '@/lib/db';
 import Question from '@/models/Question';
 import User from '@/models/User';
 import Tag from '@/models/Tag';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+export async function checkProfanity(text) {
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY is not defined.");
+    return { hasProfanity: true }; // Fail-safe default
+  }
+
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  const prompt = `
+You are a profanity detector.
+
+Respond with ONLY 'true' if the following text contains any profanity, offensive, or inappropriate language.
+Respond with ONLY 'false' if the text is clean.
+
+Text: """${text}"""
+`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const rawText = result.response.text().toLowerCase().trim();
+
+    const hasProfanity = rawText.includes('true');
+    return { hasProfanity };
+  } catch (error) {
+    console.error("Error checking profanity with Gemini API:", error);
+    return { hasProfanity: true }; // Safe fallback on error
+  }
+}
+
 
 export async function POST(req) {
   try {
@@ -25,12 +57,20 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
     
+    // Perform profanity check
+    const { hasProfanity } = await checkProfanity(`${title} ${description}`);
+    
+    // Set isApproved based on profanity check
+    const isApproved = !hasProfanity;
+    
     // Create the question
     const question = await Question.create({
       title,
       description,
       tags,
       author,
+      hasProfanity,
+      isApproved,
     });
     
     // Update user's questionsAsked count
