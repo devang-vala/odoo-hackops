@@ -23,8 +23,8 @@ export default function NotificationDropdown() {
       const response = await fetch(`/api/notification?userId=${session.user.id}&limit=10`)
       if (response.ok) {
         const data = await response.json()
-        setNotifications(data.notifications)
-        setUnreadCount(data.unreadCount)
+        setNotifications(data.notifications || [])
+        setUnreadCount(data.unreadCount || 0)
       }
     } catch (error) {
       console.error("Error fetching notifications:", error)
@@ -86,10 +86,15 @@ export default function NotificationDropdown() {
 
   return (
     <div className="relative">
-      <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="relative">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        onClick={() => setIsOpen(!isOpen)} 
+        className="relative p-2 h-auto w-auto"
+      >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs">
+          <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white text-xs border-0">
             {unreadCount > 9 ? "9+" : unreadCount}
           </Badge>
         )}

@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { Menu, X, LogOut, User, Search as SearchIcon } from 'lucide-react';
+import { Menu, X, LogOut, User, Search as SearchIcon, Bell } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
+import NotificationDropdown from '@/components/ui/NotificationDropdown';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,7 +75,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Mobile Right Icons (Search + Profile) */}
+          {/* Mobile Right Icons (Search + Notifications + Profile) */}
           <div className="ml-auto flex items-center space-x-3 md:hidden">
             {/* Mobile Search Button */}
             <button 
@@ -83,6 +84,13 @@ export default function Navbar() {
             >
               <SearchIcon size={20} />
             </button>
+            
+            {/* Mobile Notifications */}
+            {session && (
+              <div className="p-2 border-2 border-gray-200 hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]">
+                <NotificationDropdown />
+              </div>
+            )}
             
             {/* User Profile or Login */}
             {!session ? (
@@ -147,6 +155,11 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
+                {/* Desktop Notifications */}
+                <div className="p-2 border-2 border-gray-200 hover:translate-y-[-1px] hover:translate-x-[-1px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]">
+                  <NotificationDropdown />
+                </div>
+                
                 <Link href="/ask-question">
                   <button className="px-4 py-2 border-2 border-[#00d447] bg-[#00d447] text-white font-medium hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] transition-all">
                     Ask Question
