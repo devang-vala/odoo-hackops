@@ -1,8 +1,18 @@
-# StackIT
+# StackIt
+
 
 A minimal, modern Q&A forum platform with real-time features and AI moderation.
+## 📹 Presentation
 
-![StackIT Screenshot]([https://res.cloudinary.com/djzfppr3j/image/upload/v1752325742/Screenshot_2025-07-12_183514_vsctgb.png]) <!-- Replace with actual image URL -->
+[Watch the StackIt presentation video](https://youtu.be/diD4lqEWbLc)
+
+## 🌐 Live Demo
+
+[Visit StackIt Live](https://hackops-stackit.vercel.app/)
+
+
+<img src="https://res.cloudinary.com/djzfppr3j/image/upload/v1752325742/Screenshot_2025-07-12_183514_vsctgb.png" alt="StackIT UI" width="600" style="display: flex; justify-content: center; /* Distributes space between items */
+  align-items: center; " />
 
 ---
 
@@ -32,7 +42,7 @@ A minimal, modern Q&A forum platform with real-time features and AI moderation.
 
 ```bash
 # Clone and install
-git clone [https://github.com/yourusername/stackit.git](https://github.com/devang-vala/odoo-hackops.git)
+git clone https://github.com/devang-vala/odoo-hackops.git
 cd stackit
 npm install
 
