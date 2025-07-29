@@ -6,6 +6,7 @@ import { Bell, CheckCheck, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
+import { useRealTimeNotifications } from "@/lib/hooks/useRealTimeNotifications"
 
 export default function NotificationDropdown() {
   const { data: session } = useSession()
@@ -81,6 +82,15 @@ export default function NotificationDropdown() {
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [session?.user?.id])
+
+  // Handle real-time notifications
+  const handleNewNotification = (notification) => {
+    setNotifications((prev) => [notification, ...prev])
+    setUnreadCount((prev) => prev + 1)
+  }
+
+  // Subscribe to real-time notifications
+  useRealTimeNotifications(session?.user?.id, handleNewNotification)
 
   if (!session?.user) return null
 
