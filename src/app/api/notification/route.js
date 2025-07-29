@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { dbConnect } from "@/lib/db"
 import Notification from "@/models/Notification"
 import User from "@/models/User"
+import { pusher, CHANNELS, EVENTS } from "@/lib/pusher"
 
 export async function POST(request) {
   try {
@@ -33,6 +34,26 @@ export async function POST(request) {
     await User.findByIdAndUpdate(user, {
       $push: { notifications: notification._id },
     })
+
+    // Trigger real-time notification via Pusher
+    try {
+      await pusher.trigger(
+        CHANNELS.USER_NOTIFICATIONS(user),
+        EVENTS.NEW_NOTIFICATION,
+        {
+          notification: {
+            _id: notification._id,
+            type: notification.type,
+            message: notification.message,
+            isRead: notification.isRead,
+            link: notification.link,
+            createdAt: notification.createdAt,
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error triggering Pusher notification event:', error);
+    }
 
     return NextResponse.json(
       {
